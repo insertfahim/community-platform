@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Volunteers</title>
+        <link rel="stylesheet" href="styles.css" />
+        <style>
+            .container {
+                max-width: 900px;
+                margin: 2rem auto;
+                background: #fff;
+                padding: 1rem;
+                border-radius: 12px;
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+            }
+            .item {
+                border: 1px solid #eee;
+                padding: 0.6rem;
+                border-radius: 8px;
+                margin: 0.4rem 0;
+                background: #fff;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .muted {
+                color: #666;
+            }
+            button {
+                padding: 0.45rem 0.8rem;
+                border-radius: 8px;
+                background: #2c45c5;
+                color: #fff;
+                border: 0;
+                cursor: pointer;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h2>Verified Volunteers</h2>
+            <div style="margin: 0.5rem 0">
+                <button onclick="requestVolunteer()">
+                    Request Volunteer Verification
+                </button>
+            </div>
+            <div id="volunteers"></div>
+        </div>
+        <script>
+            const token = localStorage.getItem("auth_token");
+            async function loadVolunteers() {
+                const res = await fetch("/api/volunteers");
+                const data = await res.json();
+                const list = document.getElementById("volunteers");
+                list.innerHTML = "";
+                (data.volunteers || []).forEach((v) => {
+                    const div = document.createElement("div");
+                    div.className = "item";
+                    div.innerHTML = `<div><strong>${
+                        v.name
+                    }</strong> <span class='muted'>${
+                        v.email
+                    }</span></div><div>${
+                        v.isVolunteerVerified ? "✅ Verified" : "⏳ Pending"
+                    }</div>`;
+                    list.appendChild(div);
+                });
+            }
+            async function requestVolunteer() {
+                if (!token)
+                    return alert("Please log in first on the Auth page.");
+                await fetch("/api/volunteers/request", {
+                    method: "POST",
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                alert("Request submitted. An admin will review.");
+                loadVolunteers();
+            }
+            loadVolunteers();
+        </script>
+        <script src="script.js"></script>
+    </body>
+</html>

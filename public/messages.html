@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Messages</title>
+        <link rel="stylesheet" href="styles.css" />
+        <style>
+            .container {
+                max-width: 900px;
+                margin: 2rem auto;
+                background: #fff;
+                padding: 1rem;
+                border-radius: 12px;
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+            }
+            .row {
+                display: flex;
+                gap: 1rem;
+            }
+            .col {
+                flex: 1;
+            }
+            .list {
+                border: 1px solid #eee;
+                border-radius: 8px;
+                padding: 0.75rem;
+                min-height: 300px;
+            }
+            .item {
+                padding: 0.5rem;
+                border-bottom: 1px solid #f0f0f0;
+                cursor: pointer;
+            }
+            .item:last-child {
+                border-bottom: 0;
+            }
+            .composer {
+                display: flex;
+                gap: 0.5rem;
+                margin-top: 0.75rem;
+            }
+            input,
+            textarea,
+            button,
+            select {
+                padding: 0.5rem 0.7rem;
+                border-radius: 8px;
+                border: 1px solid #ddd;
+            }
+            button {
+                background: #2c45c5;
+                color: #fff;
+                border: 0;
+                cursor: pointer;
+            }
+            h3 {
+                margin: 0.5rem 0;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h2>Private Messages</h2>
+            <div style="margin: 0.5rem 0">
+                <input
+                    id="recipientId"
+                    placeholder="Recipient User ID"
+                    style="width: 260px"
+                />
+                <button onclick="startConversation()">
+                    Start Conversation
+                </button>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <h3>Conversations</h3>
+                    <div id="conversations" class="list"></div>
+                </div>
+                <div class="col">
+                    <h3 id="activeTitle">Messages</h3>
+                    <div id="messages" class="list"></div>
+                    <div class="composer">
+                        <input
+                            id="msgRecipientId"
+                            placeholder="Recipient ID"
+                            style="width: 160px"
+                        />
+                        <input
+                            id="msgBody"
+                            placeholder="Type a message..."
+                            style="flex: 1"
+                        />
+                        <button onclick="sendMessage()">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script>
+            let activeConversationId = null;
+            const token = localStorage.getItem("auth_token");
+            if (!token) alert("Please log in first on the Auth page.");
+
+            async function loadConversations() {
+                const res = await fetch("/api/messages/conversations", {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                const data = await res.json();
+                const list = document.getElementById("conversations");
+                list.innerHTML = "";
+                (data.conversations || []).forEach((c) => {
+                    const div = document.createElement("div");
+                    div.className = "item";
+                    div.textContent = `#${c._id || c.id} — participants: ${(
+                        c.participants || []
+                    ).join(", ")}`;
+                    div.onclick = () => {
+                        activeConversationId = c._id || c.id;
+                        loadMessages();
+                    };
+                    list.appendChild(div);
+                });
+            }
+
+            async function startConversation() {
+                const recipientId = document
+                    .getElementById("recipientId")
+                    .value.trim();
+                if (!recipientId) return alert("Enter recipient user id");
+                await fetch("/api/messages/start", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({ recipientId }),
+                });
+                loadConversations();
+            }
+
+            async function loadMessages() {
+                if (!activeConversationId) return;
+                const res = await fetch(
+                    `/api/messages/${activeConversationId}/messages`,
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+                const data = await res.json();
+                const list = document.getElementById("messages");
+                list.innerHTML = "";
+                (data.messages || []).forEach((m) => {
+                    const div = document.createElement("div");
+                    div.className = "item";
+                    div.textContent = `${new Date(
+                        m.createdAt
+                    ).toLocaleTimeString()} — ${m.body}`;
+                    list.appendChild(div);
+                });
+                document.getElementById(
+                    "activeTitle"
+                ).textContent = `Messages #${activeConversationId}`;
+            }
+
+            async function sendMessage() {
+                if (!activeConversationId)
+                    return alert("Open a conversation first");
+                const recipientId = document
+                    .getElementById("msgRecipientId")
+                    .value.trim();
+                const body = document.getElementById("msgBody").value.trim();
+                if (!recipientId || !body)
+                    return alert("Recipient and message required");
+                await fetch(`/api/messages/${activeConversationId}/messages`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({ recipientId, body }),
+                });
+                document.getElementById("msgBody").value = "";
+                loadMessages();
+            }
+
+            loadConversations();
+        </script>
+        <script src="script.js"></script>
+    </body>
+</html>

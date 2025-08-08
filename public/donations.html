@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Donations</title>
+        <link rel="stylesheet" href="styles.css" />
+        <style>
+            .container {
+                max-width: 900px;
+                margin: 2rem auto;
+                background: #fff;
+                padding: 1rem;
+                border-radius: 12px;
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+            }
+            .form {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 0.5rem;
+            }
+            .list {
+                margin-top: 1rem;
+            }
+            .item {
+                border: 1px solid #eee;
+                padding: 0.6rem;
+                border-radius: 8px;
+                margin: 0.4rem 0;
+                background: #fff;
+            }
+            select,
+            input,
+            textarea,
+            button {
+                padding: 0.5rem 0.7rem;
+                border-radius: 8px;
+                border: 1px solid #ddd;
+            }
+            button {
+                background: #2c45c5;
+                color: #fff;
+                border: 0;
+                cursor: pointer;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h2>Local Donation Hub</h2>
+            <div class="form">
+                <select id="kind">
+                    <option value="clothes">Clothes</option>
+                    <option value="food">Food</option>
+                    <option value="books">Books</option>
+                    <option value="other">Other</option>
+                </select>
+                <input id="location" placeholder="Pickup Location" />
+                <input id="contact" placeholder="Contact Info" />
+                <textarea
+                    id="description"
+                    placeholder="Description"
+                    style="grid-column: 1 / span 2"
+                ></textarea>
+                <button
+                    onclick="createDonation()"
+                    style="grid-column: 1 / span 2"
+                >
+                    Offer Donation
+                </button>
+            </div>
+            <div style="margin-top: 1rem; display: flex; gap: 0.5rem">
+                <select id="fKind" onchange="loadDonations()">
+                    <option value="">All</option>
+                    <option value="clothes">Clothes</option>
+                    <option value="food">Food</option>
+                    <option value="books">Books</option>
+                    <option value="other">Other</option>
+                </select>
+                <select id="fStatus" onchange="loadDonations()">
+                    <option value="">Any status</option>
+                    <option value="available">Available</option>
+                    <option value="claimed">Claimed</option>
+                    <option value="donated">Donated</option>
+                </select>
+            </div>
+            <div class="list" id="donationList"></div>
+        </div>
+        <script>
+            const token = localStorage.getItem("auth_token");
+            async function createDonation() {
+                const payload = {
+                    kind: document.getElementById("kind").value,
+                    description: document
+                        .getElementById("description")
+                        .value.trim(),
+                    location: document.getElementById("location").value.trim(),
+                    contact: document.getElementById("contact").value.trim(),
+                };
+                await fetch("/api/donations", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify(payload),
+                });
+                await loadDonations();
+            }
+            async function loadDonations() {
+                const params = new URLSearchParams();
+                const kind = document.getElementById("fKind").value;
+                const status = document.getElementById("fStatus").value;
+                if (kind) params.set("kind", kind);
+                if (status) params.set("status", status);
+                const res = await fetch("/api/donations?" + params.toString());
+                const data = await res.json();
+                const list = document.getElementById("donationList");
+                list.innerHTML = "";
+                (data.donations || []).forEach((d) => {
+                    const div = document.createElement("div");
+                    div.className = "item";
+                    div.innerHTML = `<strong>${d.kind}</strong> — ${d.status}<br/>${d.description}<br/>📍 ${d.location} | ☎️ ${d.contact}`;
+                    list.appendChild(div);
+                });
+            }
+            loadDonations();
+        </script>
+        <script src="script.js"></script>
+    </body>
+</html>

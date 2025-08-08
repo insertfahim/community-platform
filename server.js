@@ -7,7 +7,15 @@ const PORT = 3000;
 const emergencyRoutes = require("./routes/emergencyRoutes");
 const postRoutes = require("./routes/postRoutes");
 const authRoutes = require("./routes/authRoutes");
+const messageRoutes = require("./routes/messageRoutes");
+const eventRoutes = require("./routes/eventRoutes");
+const donationRoutes = require("./routes/donationRoutes");
+const learningRoutes = require("./routes/learningRoutes");
+const incidentRoutes = require("./routes/incidentRoutes");
+const historyRoutes = require("./routes/historyRoutes");
+const volunteerRoutes = require("./routes/volunteerRoutes");
 const connectToDatabase = require("./config/db");
+const { attachUser } = require("./middleware/auth");
 
 const app = express();
 
@@ -19,8 +27,8 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
 app.use(express.json());
+app.use(attachUser);
 
 app.use((req, res, next) => {
     console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
@@ -41,6 +49,27 @@ console.log("✅ postRoutes loaded");
 
 app.use("/api/users", authRoutes);
 console.log("✅ authRoutes loaded");
+
+app.use("/api/messages", messageRoutes);
+console.log("✅ messageRoutes loaded");
+
+app.use("/api/events", eventRoutes);
+console.log("✅ eventRoutes loaded");
+
+app.use("/api/donations", donationRoutes);
+console.log("✅ donationRoutes loaded");
+
+app.use("/api/learning", learningRoutes);
+console.log("✅ learningRoutes loaded");
+
+app.use("/api/incidents", incidentRoutes);
+console.log("✅ incidentRoutes loaded");
+
+app.use("/api/history", historyRoutes);
+console.log("✅ historyRoutes loaded");
+
+app.use("/api/volunteers", volunteerRoutes);
+console.log("✅ volunteerRoutes loaded");
 
 app.use(express.static("public"));
 

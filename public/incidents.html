@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Community Alerts</title>
+        <link rel="stylesheet" href="styles.css" />
+        <style>
+            .container {
+                max-width: 900px;
+                margin: 2rem auto;
+                background: #fff;
+                padding: 1rem;
+                border-radius: 12px;
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+            }
+            .form {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 0.5rem;
+            }
+            .list {
+                margin-top: 1rem;
+            }
+            .item {
+                border: 1px solid #eee;
+                padding: 0.6rem;
+                border-radius: 8px;
+                margin: 0.4rem 0;
+                background: #fff;
+            }
+            select,
+            input,
+            textarea,
+            button {
+                padding: 0.5rem 0.7rem;
+                border-radius: 8px;
+                border: 1px solid #ddd;
+            }
+            button {
+                background: #2c45c5;
+                color: #fff;
+                border: 0;
+                cursor: pointer;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h2>Report & Update Incidents / Alerts</h2>
+            <div class="form">
+                <input id="title" placeholder="Title" />
+                <input id="location" placeholder="Location" />
+                <select id="category">
+                    <option value="safety">Safety</option>
+                    <option value="weather">Weather</option>
+                    <option value="health">Health</option>
+                    <option value="other">Other</option>
+                </select>
+                <textarea
+                    id="description"
+                    placeholder="Description"
+                    style="grid-column: 1 / span 2"
+                ></textarea>
+                <button
+                    onclick="createIncident()"
+                    style="grid-column: 1 / span 2"
+                >
+                    Report Incident
+                </button>
+            </div>
+            <div style="margin-top: 1rem; display: flex; gap: 0.5rem">
+                <select id="fCategory" onchange="loadIncidents()">
+                    <option value="">All Categories</option>
+                    <option value="safety">Safety</option>
+                    <option value="weather">Weather</option>
+                    <option value="health">Health</option>
+                    <option value="other">Other</option>
+                </select>
+                <select id="fStatus" onchange="loadIncidents()">
+                    <option value="">Any status</option>
+                    <option value="open">Open</option>
+                    <option value="updated">Updated</option>
+                    <option value="resolved">Resolved</option>
+                </select>
+            </div>
+            <div class="list" id="incidentList"></div>
+        </div>
+        <script>
+            const token = localStorage.getItem("auth_token");
+            async function createIncident() {
+                const payload = {
+                    title: document.getElementById("title").value.trim(),
+                    location: document.getElementById("location").value.trim(),
+                    category: document.getElementById("category").value,
+                    description: document
+                        .getElementById("description")
+                        .value.trim(),
+                };
+                await fetch("/api/incidents", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify(payload),
+                });
+                await loadIncidents();
+            }
+            async function loadIncidents() {
+                const params = new URLSearchParams();
+                const category = document.getElementById("fCategory").value;
+                const status = document.getElementById("fStatus").value;
+                if (category) params.set("category", category);
+                if (status) params.set("status", status);
+                const res = await fetch("/api/incidents?" + params.toString());
+                const data = await res.json();
+                const list = document.getElementById("incidentList");
+                list.innerHTML = "";
+                (data.incidents || []).forEach((it) => {
+                    const div = document.createElement("div");
+                    div.className = "item";
+                    div.innerHTML = `<strong>${it.title}</strong> — ${it.status} | ${it.category}<br/>${it.description}<br/>📍 ${it.location}`;
+                    list.appendChild(div);
+                });
+            }
+            loadIncidents();
+        </script>
+        <script src="script.js"></script>
+    </body>
+</html>

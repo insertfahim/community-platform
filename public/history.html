@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>My Activity</title>
+        <link rel="stylesheet" href="styles.css" />
+        <style>
+            .container {
+                max-width: 900px;
+                margin: 2rem auto;
+                background: #fff;
+                padding: 1rem;
+                border-radius: 12px;
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+            }
+            .list {
+                margin-top: 1rem;
+            }
+            .item {
+                border: 1px solid #eee;
+                padding: 0.6rem;
+                border-radius: 8px;
+                margin: 0.4rem 0;
+                background: #fff;
+            }
+            input,
+            textarea,
+            button {
+                padding: 0.5rem 0.7rem;
+                border-radius: 8px;
+                border: 1px solid #ddd;
+            }
+            button {
+                background: #2c45c5;
+                color: #fff;
+                border: 0;
+                cursor: pointer;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h2>My History Logs</h2>
+            <div>
+                <input
+                    id="action"
+                    placeholder="Action (e.g., posted, donated, messaged)"
+                />
+                <input id="meta" placeholder="Meta JSON (optional)" />
+                <button onclick="recordLog()">Record</button>
+            </div>
+            <div class="list" id="logs"></div>
+        </div>
+        <script>
+            const token = localStorage.getItem("auth_token");
+            async function recordLog() {
+                const action = document.getElementById("action").value.trim();
+                const metaStr = document.getElementById("meta").value.trim();
+                const meta = metaStr ? JSON.parse(metaStr) : undefined;
+                await fetch("/api/history", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({ action, meta }),
+                });
+                await loadLogs();
+            }
+            async function loadLogs() {
+                const res = await fetch("/api/history", {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                const data = await res.json();
+                const list = document.getElementById("logs");
+                list.innerHTML = "";
+                (data.logs || []).forEach((l) => {
+                    const div = document.createElement("div");
+                    div.className = "item";
+                    div.textContent = `${new Date(
+                        l.createdAt
+                    ).toLocaleString()} — ${l.action} — ${JSON.stringify(
+                        l.meta || {}
+                    )}`;
+                    list.appendChild(div);
+                });
+            }
+            loadLogs();
+        </script>
+        <script src="script.js"></script>
+    </body>
+</html>

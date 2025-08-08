@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Community Feed</title>
+        <link rel="stylesheet" href="styles.css" />
+        <style>
+            .feed-container {
+                max-width: 900px;
+                margin: 2rem auto;
+                padding: 1rem;
+            }
+            .filters {
+                display: flex;
+                gap: 0.5rem;
+                flex-wrap: wrap;
+                margin-bottom: 1rem;
+            }
+            .filters select {
+                padding: 0.4rem 0.6rem;
+            }
+            .post-card {
+                border: 1px solid #e6e6e6;
+                border-radius: 8px;
+                padding: 1rem;
+                margin-bottom: 0.8rem;
+                background: #fff;
+            }
+            .post-meta {
+                display: flex;
+                gap: 0.75rem;
+                font-size: 0.85rem;
+                color: #555;
+                margin-bottom: 0.5rem;
+            }
+            .badge {
+                padding: 0.1rem 0.5rem;
+                border-radius: 4px;
+                background: #eef;
+                color: #223;
+                font-weight: 600;
+            }
+            .badge.request {
+                background: #ffe;
+            }
+            .badge.offer {
+                background: #efe;
+            }
+            .status {
+                font-weight: 700;
+            }
+        </style>
+        <script>
+            async function fetchFeed() {
+                const params = new URLSearchParams();
+                const category =
+                    document.getElementById("filterCategory").value;
+                const type = document.getElementById("filterType").value;
+                const status = document.getElementById("filterStatus").value;
+                if (category) params.set("category", category);
+                if (type) params.set("type", type);
+                if (status) params.set("status", status);
+                const res = await fetch("/api/posts?" + params.toString());
+                const data = await res.json();
+                const list = document.getElementById("feedList");
+                list.innerHTML = "";
+                (data.posts || []).forEach((p) => {
+                    const card = document.createElement("div");
+                    card.className = "post-card";
+                    card.innerHTML = `
+          <div class="post-meta">
+            <span class="badge ${p.type}">${p.type}</span>
+            <span class="badge">${p.category}</span>
+            <span class="status">${p.status}</span>
+            <span>${new Date(p.createdAt).toLocaleString()}</span>
+          </div>
+          <h3>${p.title}</h3>
+          <p>${p.description}</p>
+          <div class="post-meta">
+            <span>📍 ${p.location}</span>
+            <span>☎️ ${p.contact_info}</span>
+          </div>
+        `;
+                    list.appendChild(card);
+                });
+            }
+            document.addEventListener("DOMContentLoaded", () => {
+                ["filterCategory", "filterType", "filterStatus"].forEach(
+                    (id) => {
+                        document
+                            .getElementById(id)
+                            .addEventListener("change", fetchFeed);
+                    }
+                );
+                fetchFeed();
+            });
+        </script>
+        <script src="script.js"></script>
+    </head>
+    <body>
+        <div class="feed-container">
+            <h2>Community Feed</h2>
+            <div class="filters">
+                <select id="filterCategory">
+                    <option value="">All categories</option>
+                    <option value="education">Education</option>
+                    <option value="transportation">Transportation</option>
+                    <option value="groceries">Groceries</option>
+                    <option value="gardening">Gardening</option>
+                    <option value="healthcare">Healthcare</option>
+                    <option value="childcare">Childcare</option>
+                    <option value="Food">Food</option>
+                    <option value="Shelter">Shelter</option>
+                </select>
+                <select id="filterType">
+                    <option value="">All types</option>
+                    <option value="request">Requests</option>
+                    <option value="offer">Offers</option>
+                </select>
+                <select id="filterStatus">
+                    <option value="">Any status</option>
+                    <option value="active">Active</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
+                </select>
+            </div>
+            <div id="feedList"></div>
+        </div>
+    </body>
+</html>

@@ -1,5 +1,5 @@
 const connectToDatabase = require("../config/db");
-const { UserModel } = require("../models/User");
+const { UserModel, hashPassword } = require("../models/User");
 const { PostModel } = require("../models/Post");
 const { EmergencyModel } = require("../models/Emergency");
 
@@ -15,8 +15,22 @@ async function runSeed() {
     ]);
 
     const users = await UserModel.insertMany([
-        { name: "Admin", email: "admin@example.com", password: "admin" },
-        { name: "John Doe", email: "john@example.com", password: "password" },
+        {
+            name: "Admin",
+            email: "admin@example.com",
+            password: hashPassword("admin"),
+            role: "admin",
+            isVolunteer: true,
+            isVolunteerVerified: true,
+        },
+        {
+            name: "John Doe",
+            email: "john@example.com",
+            password: hashPassword("password"),
+            role: "user",
+            isVolunteer: false,
+            isVolunteerVerified: false,
+        },
     ]);
 
     await PostModel.insertMany([

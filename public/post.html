@@ -1,70 +1,109 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Post Request / Offer Help</title>
-  <link rel="stylesheet" href="post.css" />
-</head>
-<body>
-  <div class="container">
-    <div class="page-header">
-        <h1>🤝 Community Support</h1>
-        <p>Help your community or get the help you need</p>
-    </div>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Post Request / Offer Help</title>
+        <link rel="stylesheet" href="styles.css" />
+        <link rel="stylesheet" href="post.css" />
+    </head>
+    <body>
+        <div class="container">
+            <div class="page-header">
+                <h1>🤝 Community Support</h1>
+                <p>Help your community or get the help you need</p>
+            </div>
 
-    <div class="type-toggle">
-      <button id="needBtn" class="active">🙏 Need Help</button>
-      <button id="offerBtn">💪 Offer Help</button>
-    </div>
+            <div class="type-toggle">
+                <button id="needBtn" class="active">🙏 Need Help</button>
+                <button id="offerBtn">💪 Offer Help</button>
+            </div>
 
-    <form id="postForm">
-      <input type="hidden" id="type" name="type" value="request" />
+            <form id="postForm">
+                <input type="hidden" id="type" name="type" value="request" />
 
-      <label>Title</label>
-      <input type="text" id="title" name="title" placeholder="Brief description of your request/offer" required />
+                <label>Title</label>
+                <input
+                    type="text"
+                    id="title"
+                    name="title"
+                    placeholder="Brief description of your request/offer"
+                    required
+                />
 
-      <label>Category</label>
-      <div class="categories">
-        <button type="button" data-value="education">📚 Education</button>
-        <button type="button" data-value="transportation">🚗 Transportation</button>
-        <button type="button" data-value="groceries">🛒 Groceries</button>
-        <button type="button" data-value="gardening">🌱 Gardening</button>
-        <button type="button" data-value="healthcare">🏥 Healthcare</button>
-        <button type="button" data-value="childcare">🧸 Childcare</button>
-      </div>
-      <input type="hidden" id="category" name="category" required />
+                <label>Category</label>
+                <div class="categories">
+                    <button type="button" data-value="education">
+                        📚 Education
+                    </button>
+                    <button type="button" data-value="transportation">
+                        🚗 Transportation
+                    </button>
+                    <button type="button" data-value="groceries">
+                        🛒 Groceries
+                    </button>
+                    <button type="button" data-value="gardening">
+                        🌱 Gardening
+                    </button>
+                    <button type="button" data-value="healthcare">
+                        🏥 Healthcare
+                    </button>
+                    <button type="button" data-value="childcare">
+                        🧸 Childcare
+                    </button>
+                </div>
+                <input type="hidden" id="category" name="category" required />
 
-      <label>Description</label>
-      <textarea id="description" name="description" placeholder="Provide more details..." required></textarea>
+                <label>Description</label>
+                <textarea
+                    id="description"
+                    name="description"
+                    placeholder="Provide more details..."
+                    required
+                ></textarea>
 
-      <div class="example">
-        <strong>💡 Example Requests:</strong>
-        <ul>
-          <li>Need help picking up groceries for elderly neighbor</li>
-          <li>Looking for math tutor for my 10-year-old</li>
-          <li>Need ride to medical appointment tomorrow</li>
-        </ul>
-      </div>
+                <div class="example">
+                    <strong>💡 Example Requests:</strong>
+                    <ul>
+                        <li>
+                            Need help picking up groceries for elderly neighbor
+                        </li>
+                        <li>Looking for math tutor for my 10-year-old</li>
+                        <li>Need ride to medical appointment tomorrow</li>
+                    </ul>
+                </div>
 
-      <label>Priority Level</label>
-      <div class="priority-buttons">
-        <button type="button" data-value="low">Low</button>
-        <button type="button" data-value="medium">Medium</button>
-        <button type="button" data-value="high">Urgent</button>
-      </div>
-      <input type="hidden" id="priority" name="priority" required />
+                <label>Priority Level</label>
+                <div class="priority-buttons">
+                    <button type="button" data-value="low">Low</button>
+                    <button type="button" data-value="medium">Medium</button>
+                    <button type="button" data-value="high">Urgent</button>
+                </div>
+                <input type="hidden" id="priority" name="priority" required />
 
-      <label>Location</label>
-      <input type="text" id="location" name="location" placeholder="Your area/neighborhood" required />
+                <label>Location</label>
+                <input
+                    type="text"
+                    id="location"
+                    name="location"
+                    placeholder="Your area/neighborhood"
+                    required
+                />
 
-      <label>Contact Information</label>
-      <input type="text" id="contact_info" name="contact_info" placeholder="Phone or preferred contact method" required />
+                <label>Contact Information</label>
+                <input
+                    type="text"
+                    id="contact_info"
+                    name="contact_info"
+                    placeholder="Phone or preferred contact method"
+                    required
+                />
 
-      <button type="submit" class="submit-btn">🚀 Post</button>
-    </form>
-  </div>
+                <button type="submit" class="submit-btn">🚀 Post</button>
+            </form>
+        </div>
 
-  <script src="post.js"></script>
-</body>
+        <script src="post.js"></script>
+        <script src="script.js"></script>
+    </body>
 </html>

@@ -9,7 +9,11 @@ const postSchema = new mongoose.Schema(
         priority: { type: String, required: true },
         location: { type: String, required: true },
         contact_info: { type: String, required: true },
-        status: { type: String, default: "active" },
+        status: {
+            type: String,
+            enum: ["active", "completed", "cancelled"],
+            default: "active",
+        },
     },
     { timestamps: true }
 );
@@ -21,7 +25,26 @@ const createPost = async (postData) => {
     return doc._id.toString();
 };
 
+const listPosts = async ({ category, type, status }) => {
+    const query = {};
+    if (category) query.category = category;
+    if (type) query.type = type;
+    if (status) query.status = status;
+    return PostModel.find(query).sort({ createdAt: -1 }).lean();
+};
+
+const updatePostStatus = async (id, status) => {
+    const updated = await PostModel.findByIdAndUpdate(
+        id,
+        { $set: { status } },
+        { new: true }
+    ).lean();
+    return updated ? updated._id.toString() : undefined;
+};
+
 module.exports = {
     createPost,
+    listPosts,
+    updatePostStatus,
     PostModel,
 };

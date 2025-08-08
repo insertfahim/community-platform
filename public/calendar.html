@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>My Schedule</title>
+        <link rel="stylesheet" href="styles.css" />
+        <style>
+            .container {
+                max-width: 900px;
+                margin: 2rem auto;
+                background: #fff;
+                padding: 1rem;
+                border-radius: 12px;
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+            }
+            .form {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 0.5rem;
+            }
+            .list {
+                margin-top: 1rem;
+            }
+            .item {
+                border: 1px solid #eee;
+                padding: 0.6rem;
+                border-radius: 8px;
+                margin: 0.4rem 0;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h2>Calendar & Scheduling</h2>
+            <div class="form">
+                <input id="title" placeholder="Title" />
+                <input id="location" placeholder="Location" />
+                <input id="startAt" type="datetime-local" />
+                <input id="endAt" type="datetime-local" />
+                <textarea
+                    id="description"
+                    placeholder="Description"
+                    style="grid-column: 1 / span 2"
+                ></textarea>
+                <button onclick="createEvent()" style="grid-column: 1 / span 2">
+                    Create Event
+                </button>
+            </div>
+            <div class="list" id="eventList"></div>
+        </div>
+        <script>
+            const token = localStorage.getItem("auth_token");
+            if (!token) alert("Please log in first on the Auth page.");
+
+            async function createEvent() {
+                const payload = {
+                    title: document.getElementById("title").value.trim(),
+                    description: document
+                        .getElementById("description")
+                        .value.trim(),
+                    location: document.getElementById("location").value.trim(),
+                    startAt: new Date(
+                        document.getElementById("startAt").value
+                    ).toISOString(),
+                    endAt: new Date(
+                        document.getElementById("endAt").value
+                    ).toISOString(),
+                };
+                await fetch("/api/events", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify(payload),
+                });
+                await loadEvents();
+            }
+
+            async function loadEvents() {
+                const res = await fetch("/api/events", {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                const data = await res.json();
+                const list = document.getElementById("eventList");
+                list.innerHTML = "";
+                (data.events || []).forEach((e) => {
+                    const div = document.createElement("div");
+                    div.className = "item";
+                    div.innerHTML = `<strong>${e.title}</strong><br/>${new Date(
+                        e.startAt
+                    ).toLocaleString()} - ${new Date(
+                        e.endAt
+                    ).toLocaleString()}<br/>${e.location}<br/>${e.description}`;
+                    list.appendChild(div);
+                });
+            }
+
+            loadEvents();
+        </script>
+        <script src="script.js"></script>
+    </body>
+</html>

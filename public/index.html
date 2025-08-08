@@ -1,31 +1,78 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Community Support</title>
-  <link rel="stylesheet" href="styles.css" />
-</head>
-<body>
-  <nav class="navbar">
-    <div class="menu-icon" onclick="toggleMenu()">&#9776;</div>
-    <ul id="nav-links" class="nav-links hidden">
-      <li><a href="auth.html">Sign Up / Login</a></li>
-      <li><a href="#">About Us</a></li>
-    </ul>
-  </nav>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Community Support</title>
+        <link rel="stylesheet" href="styles.css" />
+    </head>
+    <body>
+        <nav class="navbar">
+            <div class="menu-icon" onclick="toggleMenu()">&#9776;</div>
+            <ul id="nav-links" class="nav-links hidden">
+                <li><a href="auth.html">Sign Up / Login</a></li>
+                <li><a href="post.html">Post Help</a></li>
+                <li><a href="feed.html">Feed</a></li>
+                <li><a href="messages.html">Messages</a></li>
+                <li><a href="calendar.html">Calendar</a></li>
+                <li><a href="donations.html">Donations</a></li>
+                <li><a href="learning.html">Learning</a></li>
+                <li><a href="incidents.html">Alerts</a></li>
+                <li><a href="history.html">My Logs</a></li>
+                <li><a href="volunteers.html">Volunteers</a></li>
+                <li><a href="emergency.html">Emergency</a></li>
+            </ul>
+        </nav>
 
-  <div class="main-container">
-    <div class="title">
-      <span class="word word-1">Community</span><br />
-      <span class="word word-2">Support</span>
-    </div>
-    
-    <div class="image-container">
-      <img src="pictures/community_fp2.png" alt="Community Illustration">
-    </div>
-  </div>
+        <div class="main-container">
+            <div class="title">
+                <span class="word word-1">Community</span><br />
+                <span class="word word-2">Support</span>
+            </div>
 
-  <script src="script.js"></script>
-</body>
+            <div class="image-container">
+                <img
+                    src="pictures/community_fp2.png"
+                    alt="Community Illustration"
+                />
+            </div>
+            <div style="margin-top: 1rem; display: flex; gap: 0.5rem">
+                <a
+                    href="post.html"
+                    style="
+                        padding: 0.6rem 1rem;
+                        background: #2c45c5;
+                        color: #fff;
+                        border-radius: 8px;
+                        text-decoration: none;
+                    "
+                    >Create Post</a
+                >
+                <a
+                    href="feed.html"
+                    style="
+                        padding: 0.6rem 1rem;
+                        background: #3a3a8f;
+                        color: #fff;
+                        border-radius: 8px;
+                        text-decoration: none;
+                    "
+                    >View Feed</a
+                >
+                <a
+                    href="emergency.html"
+                    style="
+                        padding: 0.6rem 1rem;
+                        background: #f36363;
+                        color: #fff;
+                        border-radius: 8px;
+                        text-decoration: none;
+                    "
+                    >Emergency</a
+                >
+            </div>
+        </div>
+
+        <script src="script.js"></script>
+    </body>
 </html>

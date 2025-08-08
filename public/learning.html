@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Learning Exchange</title>
+        <link rel="stylesheet" href="styles.css" />
+        <style>
+            .container {
+                max-width: 900px;
+                margin: 2rem auto;
+                background: #fff;
+                padding: 1rem;
+                border-radius: 12px;
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+            }
+            .form {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 0.5rem;
+            }
+            .list {
+                margin-top: 1rem;
+            }
+            .item {
+                border: 1px solid #eee;
+                padding: 0.6rem;
+                border-radius: 8px;
+                margin: 0.4rem 0;
+                background: #fff;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h2>Community Learning Exchange</h2>
+            <div class="form">
+                <select id="kind">
+                    <option value="offer">Offering</option>
+                    <option value="request">Requesting</option>
+                </select>
+                <input
+                    id="subject"
+                    placeholder="Subject (e.g., Math, English, JavaScript)"
+                />
+                <textarea
+                    id="details"
+                    placeholder="Details"
+                    style="grid-column: 1 / span 2"
+                ></textarea>
+                <button onclick="createItem()" style="grid-column: 1 / span 2">
+                    Post Item
+                </button>
+            </div>
+            <div style="margin-top: 1rem; display: flex; gap: 0.5rem">
+                <select id="fKind" onchange="loadItems()">
+                    <option value="">All</option>
+                    <option value="offer">Offer</option>
+                    <option value="request">Request</option>
+                </select>
+                <input
+                    id="fSubject"
+                    placeholder="Filter by subject"
+                    oninput="loadItems()"
+                />
+            </div>
+            <div class="list" id="items"></div>
+        </div>
+        <script>
+            const token = localStorage.getItem("auth_token");
+            async function createItem() {
+                const payload = {
+                    kind: document.getElementById("kind").value,
+                    subject: document.getElementById("subject").value.trim(),
+                    details: document.getElementById("details").value.trim(),
+                };
+                await fetch("/api/learning", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify(payload),
+                });
+                await loadItems();
+            }
+            async function loadItems() {
+                const params = new URLSearchParams();
+                const kind = document.getElementById("fKind").value;
+                const subject = document
+                    .getElementById("fSubject")
+                    .value.trim();
+                if (kind) params.set("kind", kind);
+                if (subject) params.set("subject", subject);
+                const res = await fetch("/api/learning?" + params.toString());
+                const data = await res.json();
+                const list = document.getElementById("items");
+                list.innerHTML = "";
+                (data.items || []).forEach((it) => {
+                    const div = document.createElement("div");
+                    div.className = "item";
+                    div.innerHTML = `<strong>${it.kind.toUpperCase()}</strong> — ${
+                        it.subject
+                    }<br/>${it.details}`;
+                    list.appendChild(div);
+                });
+            }
+            loadItems();
+        </script>
+        <script src="script.js"></script>
+    </body>
+</html>
