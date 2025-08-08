@@ -1,0 +1,18 @@
+{
+    "name": "community-plateform",
+    "private": true,
+    "scripts": {
+        "start": "node server.js",
+    "seed": "node seed/seed.js",
+    "dev": "nodemon server.js"
+    },
+    "dependencies": {
+        "body-parser": "^2.2.0",
+        "cors": "^2.8.5",
+        "express": "^5.1.0",
+        "mongoose": "^8.5.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+    }
+}

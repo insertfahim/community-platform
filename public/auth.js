@@ -1,0 +1,93 @@
+document.querySelector('.img__btn').addEventListener('click', function () {
+  document.querySelector('.cont').classList.toggle('s--signup');
+});
+
+//SIGN UP
+const signUpBtn = document.querySelector(".submit.sign-up");
+if (signUpBtn) {
+  signUpBtn.addEventListener("click", async () => {
+    const name = document.querySelector('.sign-up input[type="text"]').value.trim();
+    const email = document.querySelector('.sign-up input[type="email"]').value.trim();
+    const password = document.querySelector('.sign-up input[type="password"]').value.trim();
+    const signupError = document.getElementById("signupError");
+
+    if (signupError) signupError.innerText = "";
+
+  
+    if (!name || !email || !password) {
+      signupError.innerText = "❌ All fields are required.";
+      return;
+    }
+
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(email)) {
+      signupError.innerText = "❌ Please enter a valid email address.";
+      return;
+    }
+
+    try {
+      const res = await fetch("http://localhost:3000/api/users/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        signupError.innerText = data.message || "❌ Registration failed.";
+        return;
+      }
+
+      alert("✅ Registered successfully!");
+      document.querySelector('.sign-up input[type="text"]').value = "";
+      document.querySelector('.sign-up input[type="email"]').value = "";
+      document.querySelector('.sign-up input[type="password"]').value = "";
+
+      // Switch to sign-in view
+      document.querySelector('.cont').classList.remove("s--signup");
+    } catch (err) {
+      console.error("Network error:", err);
+      signupError.innerText = "❌ Network error. Please try again.";
+    }
+  });
+}
+
+// SIGN IN
+const signInBtn = document.querySelector(".sign-in .submit");
+if (signInBtn) {
+  signInBtn.addEventListener("click", async () => {
+    const email = document.querySelector('.sign-in input[type="email"]').value.trim();
+    const password = document.querySelector('.sign-in input[type="password"]').value.trim();
+    const signinError = document.getElementById("signinError");
+
+    if (signinError) signinError.innerText = "";
+
+  
+    if (!email || !password) {
+      signinError.innerText = "❌ Email and password are required.";
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/users/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        signinError.innerText = data.message || "❌ Login failed.";
+        return;
+      }
+
+      alert("✅ Login successful!");
+      window.location.href = "/"; 
+    } catch (err) {
+      console.error("Network error:", err);
+      signinError.innerText = "❌ Network error. Please try again.";
+    }
+  });
+}

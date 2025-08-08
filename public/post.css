@@ -1,0 +1,172 @@
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(145deg, #5257c1, #474db5);
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  background: rgb(236, 231, 231);
+  max-width: 700px;
+  margin: 40px auto;
+  padding: 30px 40px;
+  border-radius: 15px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+.page-header {
+  background: linear-gradient(135deg, #546ed9, #3a6df0);
+  padding: 30px 20px;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  border-bottom-left-radius: 20px;
+  border-bottom-right-radius: 20px;
+  text-align: center;
+  color: white;
+}
+
+.page-header h1 {
+  font-size: 32px;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  color: white;
+}
+
+.page-header p {
+  font-size: 16px;
+  opacity: 0.9;
+  color: white;
+}
+
+h1 {
+  text-align: center;
+  color: #1a237e;
+}
+
+p {
+  text-align: center;
+  color: #444;
+  margin-bottom: 30px;
+}
+
+.type-toggle {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 20px auto;
+  background: #f2f6fd;
+  padding: 10px;
+  border-radius: 15px;
+  max-width: 500px;
+}
+
+
+.type-toggle button {
+  flex: 1;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 15px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: transparent;
+  color: #555;
+}
+
+
+.type-toggle button.active {
+  background-color: #f8f1f1;
+  color: #1a3fa3;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+
+.type-toggle button span.emoji {
+  font-size: 18px;
+}
+
+
+label {
+  display: block;
+  margin-top: 20px;
+  font-weight: 600;
+  color: #333;
+}
+
+input, textarea {
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  margin-top: 6px;
+  resize: none;
+}
+
+textarea {
+  height: 90px;
+}
+
+.categories,
+.priority-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.categories button,
+.priority-buttons button {
+  flex: 1 0 30%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 2px solid #ccc;
+  background: #f9f9f9;
+  cursor: pointer;
+  font-size: 14px;
+  transition: 0.2s ease;
+}
+
+.categories button.selected,
+.priority-buttons button.selected {
+  background: #e3f2fd;
+  border-color: #1976d2;
+  color: #0d47a1;
+  font-weight: bold;
+}
+
+.example {
+  background: #e3f2fd;
+  padding: 12px;
+  margin-top: 20px;
+  border-left: 5px solid #1976d2;
+  border-radius: 6px;
+}
+
+.example ul {
+  padding-left: 20px;
+  margin: 5px 0 0;
+}
+
+.submit-btn {
+  margin-top: 30px;
+  padding: 12px;
+  width: 100%;
+  background: #1a237e;
+  color: white;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.submit-btn:hover {
+  background: #000c6d;
+}

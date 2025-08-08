@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🚨 Emergency Contacts</title>
+  <link rel="stylesheet" href="emergency.css">
+</head>
+<body>
+  <div class="emergency-container">
+    <h2>Emergency Contacts</h2>
+    <p>Search by area or browse emergency contacts by service</p>
+    <input type="text" id="areaSearchInput" placeholder="Search by area (e.g., Dhanmondi, Gulshan)" />
+
+    <div class="contact-section">
+        <div class="section-header" data-category="Police">👮 Police Department ▾</div>
+        <div class="section-body" id="policeSection"></div>
+    </div>
+
+    <div class="contact-section">
+        <div class="section-header" data-category="Hospital">🏥 Hospitals & Medical ▾</div>
+        <div class="section-body" id="hospitalSection"></div>
+    </div>
+
+    <div class="contact-section">
+        <div class="section-header" data-category="Fire Service">🚒 Fire Service ▾</div>
+        <div class="section-body" id="fireSection"></div>
+    </div>
+
+    <div class="contact-section">
+        <div class="section-header" data-category="Volunteers">🤝 Volunteers ▾</div>
+        <div class="section-body" id="volunteerSection"></div>
+    </div>
+  </div>
+
+
+  <script src="emergency.js"></script>
+</body>
+</html>
