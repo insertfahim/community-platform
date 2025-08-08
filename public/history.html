@@ -54,6 +54,9 @@
         </div>
         <script>
             const token = localStorage.getItem("auth_token");
+            if (!token) {
+                window.location.replace("/auth.html");
+            }
             async function recordLog() {
                 const action = document.getElementById("action").value.trim();
                 const metaStr = document.getElementById("meta").value.trim();

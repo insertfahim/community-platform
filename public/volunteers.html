@@ -41,7 +41,7 @@
         <div class="container">
             <h2>Verified Volunteers</h2>
             <div style="margin: 0.5rem 0">
-                <button onclick="requestVolunteer()">
+                <button id="requestBtn" onclick="requestVolunteer()">
                     Request Volunteer Verification
                 </button>
             </div>
@@ -49,6 +49,19 @@
         </div>
         <script>
             const token = localStorage.getItem("auth_token");
+            (function gateRequest() {
+                const btn = document.getElementById("requestBtn");
+                if (!btn) return;
+                if (!token) {
+                    btn.style.display = "none";
+                    const info = document.createElement("div");
+                    info.className = "muted";
+                    info.style.margin = "0.5rem 0";
+                    info.textContent =
+                        "Log in to request volunteer verification.";
+                    btn.parentElement.appendChild(info);
+                }
+            })();
             async function loadVolunteers() {
                 const res = await fetch("/api/volunteers");
                 const data = await res.json();

@@ -88,6 +88,22 @@
         </div>
         <script>
             const token = localStorage.getItem("auth_token");
+            (function gateCreateUI() {
+                const container = document.querySelector(".container");
+                const formEl = document.querySelector(".form");
+                if (!container || !formEl) return;
+                if (!token) {
+                    formEl.style.display = "none";
+                    const notice = document.createElement("div");
+                    notice.style.margin = "0.5rem 0 1rem";
+                    notice.style.padding = "0.6rem 0.8rem";
+                    notice.style.background = "#fff7ed";
+                    notice.style.border = "1px solid #fed7aa";
+                    notice.style.borderRadius = "8px";
+                    notice.textContent = "Please log in to offer a donation.";
+                    container.insertBefore(notice, formEl);
+                }
+            })();
             async function createDonation() {
                 const payload = {
                     kind: document.getElementById("kind").value,

@@ -14,6 +14,7 @@ const learningRoutes = require("./routes/learningRoutes");
 const incidentRoutes = require("./routes/incidentRoutes");
 const historyRoutes = require("./routes/historyRoutes");
 const volunteerRoutes = require("./routes/volunteerRoutes");
+const adminRoutes = require("./routes/adminRoutes");
 const connectToDatabase = require("./config/db");
 const { attachUser } = require("./middleware/auth");
 
@@ -70,6 +71,9 @@ console.log("✅ historyRoutes loaded");
 
 app.use("/api/volunteers", volunteerRoutes);
 console.log("✅ volunteerRoutes loaded");
+
+app.use("/api/admin", adminRoutes);
+console.log("✅ adminRoutes loaded");
 
 app.use(express.static("public"));
 

@@ -105,5 +105,13 @@
 
         <script src="post.js"></script>
         <script src="script.js"></script>
+        <script>
+            (function gatePostPage() {
+                const token = localStorage.getItem("auth_token");
+                if (!token) {
+                    window.location.replace("/auth.html");
+                }
+            })();
+        </script>
     </body>
 </html>

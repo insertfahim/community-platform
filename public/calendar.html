@@ -51,7 +51,9 @@
         </div>
         <script>
             const token = localStorage.getItem("auth_token");
-            if (!token) alert("Please log in first on the Auth page.");
+            if (!token) {
+                window.location.replace("/auth.html");
+            }
 
             async function createEvent() {
                 const payload = {

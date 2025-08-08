@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Admin Panel</title>
+        <link rel="stylesheet" href="styles.css" />
+        <style>
+            .container {
+                max-width: 960px;
+                margin: 2rem auto;
+                background: #fff;
+                padding: 1rem;
+                border-radius: 8px;
+            }
+            table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+            th,
+            td {
+                border-bottom: 1px solid #eee;
+                padding: 8px;
+                text-align: left;
+            }
+            th {
+                background: #f8f8f8;
+            }
+            select {
+                padding: 4px;
+            }
+            .pill {
+                display: inline-block;
+                padding: 2px 8px;
+                border-radius: 999px;
+                font-size: 12px;
+                background: #eef;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h2>Admin - Users</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Volunteer</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="usersBody"></tbody>
+            </table>
+        </div>
+        <script src="admin.js"></script>
+        <script src="script.js"></script>
+    </body>
+</html>
