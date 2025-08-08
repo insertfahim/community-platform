@@ -1,4 +1,9 @@
-const { createEvent, listEvents } = require("../models/Event");
+const {
+    createEvent,
+    listEvents,
+    updateEvent,
+    deleteEvent,
+} = require("../models/Event");
 const { addLog } = require("../models/HistoryLog");
 
 const ensureAuth = (req, res) => {
@@ -33,11 +38,37 @@ const create = async (req, res) => {
 
 const list = async (req, res) => {
     if (!ensureAuth(req, res)) return;
-    const events = await listEvents(req.user.id);
+    const { from, to } = req.query;
+    const events = await listEvents(req.user.id, { from, to });
     res.json({ events });
 };
 
 module.exports = {
     create,
     list,
+    update: async (req, res) => {
+        if (!ensureAuth(req, res)) return;
+        const { id } = req.params;
+        const updated = await updateEvent(id, req.user.id, req.body || {});
+        if (!updated)
+            return res.status(404).json({ message: "Event not found" });
+        await addLog({
+            userId: req.user.id,
+            action: "event_updated",
+            meta: { eventId: id },
+        });
+        res.json({ message: "Updated" });
+    },
+    remove: async (req, res) => {
+        if (!ensureAuth(req, res)) return;
+        const { id } = req.params;
+        const ok = await deleteEvent(id, req.user.id);
+        if (!ok) return res.status(404).json({ message: "Event not found" });
+        await addLog({
+            userId: req.user.id,
+            action: "event_deleted",
+            meta: { eventId: id },
+        });
+        res.json({ message: "Deleted" });
+    },
 };

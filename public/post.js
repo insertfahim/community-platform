@@ -78,7 +78,8 @@ document.getElementById("postForm").addEventListener("submit", async (e) => {
 
         const result = await res.json();
         console.log("✅ Response:", result);
-        alert("Post submitted successfully!");
+        const notice = document.getElementById("postNotice");
+        if (notice) notice.textContent = "✅ Post submitted successfully!";
 
         // Reset form
         document.getElementById("postForm").reset();
@@ -90,6 +91,7 @@ document.getElementById("postForm").addEventListener("submit", async (e) => {
         document.getElementById("offerBtn").classList.remove("active");
     } catch (err) {
         console.error("Error:", err);
-        alert("❌ Submit error: " + err.message);
+        const notice = document.getElementById("postNotice");
+        if (notice) notice.textContent = "❌ Submit error: " + err.message;
     }
 });

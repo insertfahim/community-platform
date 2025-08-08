@@ -37,11 +37,63 @@
                 border: 0;
                 cursor: pointer;
             }
+            .pill {
+                display: inline-block;
+                padding: 2px 8px;
+                border-radius: 999px;
+                font-size: 12px;
+                background: #eef;
+                font-weight: 600;
+            }
+            .muted {
+                color: #666;
+                font-size: 12px;
+            }
+            .meta {
+                background: #f8fafc;
+                border: 1px solid #e5e7eb;
+                border-radius: 8px;
+                padding: 8px;
+                margin-top: 6px;
+                white-space: pre-wrap;
+                font-family: ui-monospace, SFMono-Regular, Menlo, Monaco,
+                    Consolas, "Liberation Mono", "Courier New", monospace;
+                font-size: 12px;
+            }
+            .kvlist {
+                margin-top: 6px;
+                background: #f8fafc;
+                border: 1px solid #e5e7eb;
+                border-radius: 8px;
+                padding: 10px 12px;
+                display: grid;
+                grid-template-columns: 160px 1fr;
+                column-gap: 12px;
+                row-gap: 6px;
+            }
+            .kvlist .k {
+                color: #475569;
+                font-weight: 600;
+                font-size: 12px;
+            }
+            .kvlist .v {
+                color: #0f172a;
+                font-size: 13px;
+            }
+            .notice {
+                margin-top: 8px;
+                text-align: center;
+                font-size: 13px;
+                color: #065f46;
+            }
+            .notice.error {
+                color: #b91c1c;
+            }
         </style>
     </head>
     <body>
         <div class="container">
-            <h2>My History Logs</h2>
+            <h2>My Activity</h2>
             <div>
                 <input
                     id="action"
@@ -49,7 +101,13 @@
                 />
                 <input id="meta" placeholder="Meta JSON (optional)" />
                 <button onclick="recordLog()">Record</button>
+                <div id="notice" class="notice"></div>
             </div>
+            <div class="list" id="recentPosts"></div>
+            <div class="list" id="myDonations"></div>
+            <div class="list" id="myLearning"></div>
+            <div class="list" id="myEvents"></div>
+            <div class="list" id="myAlerts"></div>
             <div class="list" id="logs"></div>
         </div>
         <script>
@@ -57,10 +115,53 @@
             if (!token) {
                 window.location.replace("/auth.html");
             }
+            const notice = document.getElementById("notice");
+            function setNotice(text, isError = false) {
+                if (!notice) return;
+                notice.textContent = text || "";
+                notice.classList.toggle("error", !!isError);
+            }
+            function escapeHtml(str) {
+                return (str || "").replace(
+                    /[&<>"']/g,
+                    (ch) =>
+                        ({
+                            "&": "&amp;",
+                            "<": "&lt;",
+                            ">": "&gt;",
+                            '"': "&quot;",
+                            "'": "&#39;",
+                        }[ch])
+                );
+            }
+            function renderMeta(meta) {
+                try {
+                    if (!meta || typeof meta !== "object") return "";
+                    // Show only concise known data (postId + title)
+                    if (meta.postId) {
+                        const title = meta.title
+                            ? ` — ${escapeHtml(meta.title)}`
+                            : "";
+                        return `<div class="kvlist"><div class="k">Post</div><div class="v">#${escapeHtml(
+                            meta.postId
+                        )}${title}</div></div>`;
+                    }
+                    return "";
+                } catch {
+                    return "";
+                }
+            }
             async function recordLog() {
                 const action = document.getElementById("action").value.trim();
                 const metaStr = document.getElementById("meta").value.trim();
-                const meta = metaStr ? JSON.parse(metaStr) : undefined;
+                let meta;
+                try {
+                    meta = metaStr ? JSON.parse(metaStr) : undefined;
+                } catch (e) {
+                    setNotice("❌ Invalid JSON in Meta.", true);
+                    return;
+                }
+                setNotice("");
                 await fetch("/api/history", {
                     method: "POST",
                     headers: {
@@ -69,27 +170,513 @@
                     },
                     body: JSON.stringify({ action, meta }),
                 });
+                setNotice("✅ Recorded.");
+                document.getElementById("action").value = "";
+                document.getElementById("meta").value = "";
                 await loadLogs();
             }
             async function loadLogs() {
+                setNotice("Loading...");
                 const res = await fetch("/api/history", {
                     headers: { Authorization: `Bearer ${token}` },
                 });
                 const data = await res.json();
                 const list = document.getElementById("logs");
                 list.innerHTML = "";
-                (data.logs || []).forEach((l) => {
+                const rawLogs = data.logs || [];
+                // Hide post-related logs
+                const logs = rawLogs.filter(
+                    (l) => !/^post_/i.test(l.action || "")
+                );
+                if (!logs.length) {
+                    setNotice(
+                        "No logs yet. Actions you take will appear here."
+                    );
+                    return;
+                }
+                setNotice("");
+                logs.forEach((l) => {
                     const div = document.createElement("div");
                     div.className = "item";
-                    div.textContent = `${new Date(
-                        l.createdAt
-                    ).toLocaleString()} — ${l.action} — ${JSON.stringify(
-                        l.meta || {}
-                    )}`;
+                    const when = new Date(l.createdAt).toLocaleString();
+                    const hasMeta = l.meta && Object.keys(l.meta).length > 0;
+                    div.innerHTML = `
+                        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+                            <span class="pill">${escapeHtml(
+                                l.action || "action"
+                            )}</span>
+                            <span class="muted">${escapeHtml(when)}</span>
+                        </div>
+                        ${hasMeta ? renderMeta(l.meta) : ""}
+                    `;
                     list.appendChild(div);
                 });
             }
+            async function loadMyRecentPosts() {
+                try {
+                    // Fetch current user id
+                    const me = await fetch("/api/users/me", {
+                        headers: { Authorization: `Bearer ${token}` },
+                    });
+                    if (!me.ok) return;
+                    const meData = await me.json();
+                    const userId = meData && meData.user && meData.user.id;
+                    if (!userId) return;
+                    const params = new URLSearchParams();
+                    params.set("ownerId", userId);
+                    params.set("status", "active");
+                    params.set("sort", "smart");
+                    const res = await fetch("/api/posts?" + params.toString());
+                    if (!res.ok) return;
+                    const data = await res.json();
+                    const posts = data.posts || [];
+                    const list = document.getElementById("recentPosts");
+                    list.innerHTML = "";
+                    if (!posts.length) return;
+                    const header = document.createElement("h3");
+                    header.textContent = "My Recent Posts";
+                    list.appendChild(header);
+                    posts.slice(0, 5).forEach((p) => {
+                        const div = document.createElement("div");
+                        div.className = "item";
+                        div.innerHTML = `
+                            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+                                <span class="pill">${escapeHtml(
+                                    p.type || "request"
+                                )}</span>
+                                <span class="muted">${new Date(
+                                    p.createdAt
+                                ).toLocaleString()}</span>
+                            </div>
+                            <div style="font-weight:700;margin-top:4px;">${escapeHtml(
+                                p.title || ""
+                            )}</div>
+                            <div class="muted">${escapeHtml(
+                                p.category || ""
+                            )} • ${escapeHtml(p.priority || "")} • ${escapeHtml(
+                            p.status || ""
+                        )}</div>
+                            <div style="margin-top:6px;">${escapeHtml(
+                                p.description || ""
+                            )}</div>
+                            <div style="display:flex;gap:8px;margin-top:8px;">
+                                <button onclick="editPost('${
+                                    p._id || p.id
+                                }')">Edit</button>
+                                <button onclick="deletePost('${
+                                    p._id || p.id
+                                }')" style="background:#ef4444">Delete</button>
+                            </div>
+                        `;
+                        list.appendChild(div);
+                    });
+                } catch (_e) {}
+            }
+
+            async function loadMyDonations(userId) {
+                const res = await fetch(
+                    `/api/donations?ownerId=${encodeURIComponent(userId)}`
+                );
+                if (!res.ok) return;
+                const data = await res.json();
+                const items = data.donations || [];
+                const list = document.getElementById("myDonations");
+                list.innerHTML = "";
+                if (!items.length) return;
+                const h = document.createElement("h3");
+                h.textContent = "My Donations";
+                list.appendChild(h);
+                items.slice(0, 5).forEach((d) => {
+                    const id = d._id || d.id;
+                    const div = document.createElement("div");
+                    div.className = "item";
+                    div.innerHTML = `
+                        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+                            <span class="pill">${escapeHtml(
+                                d.kind || ""
+                            )}</span>
+                            <span class="muted">${new Date(
+                                d.createdAt
+                            ).toLocaleString()}</span>
+                        </div>
+                        <div style="margin-top:6px;">${escapeHtml(
+                            d.description || ""
+                        )}</div>
+                        <div class="muted">📍 ${escapeHtml(
+                            d.location || ""
+                        )} • 📞 ${escapeHtml(d.contact || "")} • ${escapeHtml(
+                        d.status || ""
+                    )}</div>
+                        <div style="display:flex;gap:8px;margin-top:8px;">
+                            <button onclick="editDonation('${id}')">Edit</button>
+                            <button onclick="deleteDonation('${id}')" style="background:#ef4444">Delete</button>
+                        </div>`;
+                    list.appendChild(div);
+                });
+            }
+
+            async function loadMyLearning(userId) {
+                const res = await fetch(
+                    `/api/learning?ownerId=${encodeURIComponent(userId)}`
+                );
+                if (!res.ok) return;
+                const data = await res.json();
+                const items = data.items || [];
+                const list = document.getElementById("myLearning");
+                list.innerHTML = "";
+                if (!items.length) return;
+                const h = document.createElement("h3");
+                h.textContent = "My Learning";
+                list.appendChild(h);
+                items.slice(0, 5).forEach((it) => {
+                    const id = it._id || it.id;
+                    const div = document.createElement("div");
+                    div.className = "item";
+                    div.innerHTML = `
+                        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+                            <span class="pill">${escapeHtml(
+                                it.kind || "offer"
+                            )}</span>
+                            <span class="muted">${new Date(
+                                it.createdAt
+                            ).toLocaleString()}</span>
+                        </div>
+                        <div style="font-weight:700;margin-top:4px;">${escapeHtml(
+                            it.subject || ""
+                        )}</div>
+                        <div style="margin-top:6px;">${escapeHtml(
+                            it.details || ""
+                        )}</div>
+                        <div style="display:flex;gap:8px;margin-top:8px;">
+                            <button onclick="editLearning('${id}')">Edit</button>
+                            <button onclick="deleteLearning('${id}')" style="background:#ef4444">Delete</button>
+                        </div>`;
+                    list.appendChild(div);
+                });
+            }
+
+            async function loadMyEvents(userId) {
+                const res = await fetch(`/api/events`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                if (!res.ok) return;
+                const data = await res.json();
+                const items = data.events || [];
+                const list = document.getElementById("myEvents");
+                list.innerHTML = "";
+                if (!items.length) return;
+                const h = document.createElement("h3");
+                h.textContent = "My Calendar";
+                list.appendChild(h);
+                items.slice(0, 5).forEach((ev) => {
+                    const id = ev._id || ev.id;
+                    const div = document.createElement("div");
+                    div.className = "item";
+                    const start = new Date(ev.startAt).toLocaleString();
+                    const end = new Date(ev.endAt).toLocaleString();
+                    div.innerHTML = `
+                        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+                            <span class="pill">Event</span>
+                            <span class="muted">${start} → ${end}</span>
+                        </div>
+                        <div style="font-weight:700;margin-top:4px;">${escapeHtml(
+                            ev.title || ""
+                        )}</div>
+                        <div class="muted">📍 ${escapeHtml(
+                            ev.location || ""
+                        )}</div>
+                        <div style="margin-top:6px;">${escapeHtml(
+                            ev.description || ""
+                        )}</div>
+                        <div style="display:flex;gap:8px;margin-top:8px;">
+                            <button onclick="editEvent('${id}')">Edit</button>
+                            <button onclick="deleteEvent('${id}')" style="background:#ef4444">Delete</button>
+                        </div>`;
+                    list.appendChild(div);
+                });
+            }
+
+            async function loadMyAlerts(userId) {
+                const res = await fetch(
+                    `/api/incidents?reporterId=${encodeURIComponent(userId)}`
+                );
+                if (!res.ok) return;
+                const data = await res.json();
+                const items = data.incidents || [];
+                const list = document.getElementById("myAlerts");
+                list.innerHTML = "";
+                if (!items.length) return;
+                const h = document.createElement("h3");
+                h.textContent = "My Alerts";
+                list.appendChild(h);
+                items.slice(0, 5).forEach((it) => {
+                    const id = it._id || it.id;
+                    const div = document.createElement("div");
+                    div.className = "item";
+                    div.innerHTML = `
+                        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+                            <span class="pill">${escapeHtml(
+                                it.category || "other"
+                            )}</span>
+                            <span class="muted">${new Date(
+                                it.createdAt
+                            ).toLocaleString()}</span>
+                        </div>
+                        <div style="font-weight:700;margin-top:4px;">${escapeHtml(
+                            it.title || ""
+                        )}</div>
+                        <div style="margin-top:6px;">${escapeHtml(
+                            it.description || ""
+                        )}</div>
+                        <div class="muted">📍 ${escapeHtml(
+                            it.location || ""
+                        )} • ${escapeHtml(it.status || "open")}</div>
+                        <div style="display:flex;gap:8px;margin-top:8px;">
+                            <button onclick="editAlert('${id}')">Edit</button>
+                            <button onclick="deleteAlert('${id}')" style="background:#ef4444">Delete</button>
+                        </div>`;
+                    list.appendChild(div);
+                });
+            }
+            loadMyRecentPosts();
+            (async function initBundles() {
+                const me = await fetch("/api/users/me", {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                if (me.ok) {
+                    const data = await me.json();
+                    const userId = data && data.user && data.user.id;
+                    if (userId) {
+                        loadMyDonations(userId);
+                        loadMyLearning(userId);
+                        loadMyEvents(userId);
+                        loadMyAlerts(userId);
+                    }
+                }
+            })();
             loadLogs();
+
+            async function deletePost(id) {
+                if (!confirm("Delete this post?")) return;
+                await fetch(`/api/posts/${id}`, {
+                    method: "DELETE",
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                setNotice("Deleted.");
+                await loadMyRecentPosts();
+            }
+
+            async function editPost(id) {
+                const title = prompt("New title (leave blank to keep)");
+                const description = prompt(
+                    "New description (leave blank to keep)"
+                );
+                const updates = {};
+                if (title && title.trim()) updates.title = title.trim();
+                if (description && description.trim())
+                    updates.description = description.trim();
+                if (Object.keys(updates).length === 0) return;
+                await fetch(`/api/posts/${id}`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify(updates),
+                });
+                setNotice("Updated.");
+                await loadMyRecentPosts();
+            }
+
+            // Donations
+            async function deleteDonation(id) {
+                if (!confirm("Delete this donation?")) return;
+                await fetch(`/api/donations/${id}`, {
+                    method: "DELETE",
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                setNotice("Donation deleted.");
+                const me = await fetch("/api/users/me", {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                if (me.ok) {
+                    const { user } = await me.json();
+                    if (user && user.id) loadMyDonations(user.id);
+                }
+            }
+            async function editDonation(id) {
+                const kind = prompt(
+                    "Kind (clothes, food, books, other) — leave blank to keep"
+                );
+                const description = prompt("Description — leave blank to keep");
+                const location = prompt("Location — leave blank to keep");
+                const contact = prompt("Contact — leave blank to keep");
+                const status = prompt(
+                    "Status (available, claimed, donated) — leave blank to keep"
+                );
+                const updates = {};
+                if (kind) updates.kind = kind;
+                if (description) updates.description = description;
+                if (location) updates.location = location;
+                if (contact) updates.contact = contact;
+                if (status) updates.status = status;
+                if (!Object.keys(updates).length) return;
+                await fetch(`/api/donations/${id}`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify(updates),
+                });
+                setNotice("Donation updated.");
+                const me = await fetch("/api/users/me", {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                if (me.ok) {
+                    const { user } = await me.json();
+                    if (user && user.id) loadMyDonations(user.id);
+                }
+            }
+
+            // Learning
+            async function deleteLearning(id) {
+                if (!confirm("Delete this learning item?")) return;
+                await fetch(`/api/learning/${id}`, {
+                    method: "DELETE",
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                setNotice("Learning item deleted.");
+                const me = await fetch("/api/users/me", {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                if (me.ok) {
+                    const { user } = await me.json();
+                    if (user && user.id) loadMyLearning(user.id);
+                }
+            }
+            async function editLearning(id) {
+                const kind = prompt(
+                    "Kind (offer, request) — leave blank to keep"
+                );
+                const subject = prompt("Subject — leave blank to keep");
+                const details = prompt("Details — leave blank to keep");
+                const updates = {};
+                if (kind) updates.kind = kind;
+                if (subject) updates.subject = subject;
+                if (details) updates.details = details;
+                if (!Object.keys(updates).length) return;
+                await fetch(`/api/learning/${id}`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify(updates),
+                });
+                setNotice("Learning item updated.");
+                const me = await fetch("/api/users/me", {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                if (me.ok) {
+                    const { user } = await me.json();
+                    if (user && user.id) loadMyLearning(user.id);
+                }
+            }
+
+            // Events
+            async function deleteEvent(id) {
+                if (!confirm("Delete this event?")) return;
+                await fetch(`/api/events/${id}`, {
+                    method: "DELETE",
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                setNotice("Event deleted.");
+                const me = await fetch("/api/users/me", {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                if (me.ok) {
+                    const { user } = await me.json();
+                    if (user && user.id) loadMyEvents(user.id);
+                }
+            }
+            async function editEvent(id) {
+                const title = prompt("Title — leave blank to keep");
+                const description = prompt("Description — leave blank to keep");
+                const location = prompt("Location — leave blank to keep");
+                const startAt = prompt(
+                    "Start (ISO e.g., 2025-08-09T10:00:00Z) — leave blank to keep"
+                );
+                const endAt = prompt(
+                    "End (ISO e.g., 2025-08-09T11:00:00Z) — leave blank to keep"
+                );
+                const updates = {};
+                if (title) updates.title = title;
+                if (description) updates.description = description;
+                if (location) updates.location = location;
+                if (startAt) updates.startAt = startAt;
+                if (endAt) updates.endAt = endAt;
+                if (!Object.keys(updates).length) return;
+                await fetch(`/api/events/${id}`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify(updates),
+                });
+                setNotice("Event updated.");
+                const me = await fetch("/api/users/me", {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                if (me.ok) {
+                    const { user } = await me.json();
+                    if (user && user.id) loadMyEvents(user.id);
+                }
+            }
+
+            // Alerts
+            async function deleteAlert(id) {
+                if (!confirm("Delete this alert?")) return;
+                await fetch(`/api/incidents/${id}`, {
+                    method: "DELETE",
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                setNotice("Alert deleted.");
+                const me = await fetch("/api/users/me", {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                if (me.ok) {
+                    const { user } = await me.json();
+                    if (user && user.id) loadMyAlerts(user.id);
+                }
+            }
+            async function editAlert(id) {
+                const status = prompt(
+                    "Status (open, updated, resolved) — leave blank to keep"
+                );
+                const description = prompt("Description — leave blank to keep");
+                const updates = {};
+                if (status) updates.status = status;
+                if (description) updates.description = description;
+                if (!Object.keys(updates).length) return;
+                await fetch(`/api/incidents/${id}`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify(updates),
+                });
+                setNotice("Alert updated.");
+                const me = await fetch("/api/users/me", {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                if (me.ok) {
+                    const { user } = await me.json();
+                    if (user && user.id) loadMyAlerts(user.id);
+                }
+            }
         </script>
         <script src="script.js"></script>
     </body>

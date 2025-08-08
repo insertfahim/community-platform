@@ -38,10 +38,21 @@ const register = async (req, res) => {
         }
 
         const userId = await User.createUser({ name, email, password });
-        const token = createToken({ sub: userId, email, role: "user" });
+        const created = await User.findUserById(userId);
+        const token = createToken({
+            sub: userId,
+            email,
+            role: "user",
+            username: created?.username,
+        });
         return res
             .status(201)
-            .json({ message: "User registered successfully", userId, token });
+            .json({
+                message: "User registered successfully",
+                userId,
+                token,
+                username: created?.username,
+            });
     } catch (error) {
         console.error("❌ Registration error:", error);
         return res.status(500).json({ message: "Server error" });
@@ -72,10 +83,16 @@ const login = async (req, res) => {
             sub: user.id,
             email: user.email,
             role: user.role || "user",
+            username: user.username,
         });
         return res
             .status(200)
-            .json({ message: "Login successful", userId: user.id, token });
+            .json({
+                message: "Login successful",
+                userId: user.id,
+                token,
+                username: user.username,
+            });
     } catch (error) {
         console.error("❌ Login error:", error);
         return res.status(500).json({ message: "Server error" });

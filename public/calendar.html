@@ -10,23 +10,72 @@
                 max-width: 900px;
                 margin: 2rem auto;
                 background: #fff;
-                padding: 1rem;
+                padding: 1rem 1.25rem 1.5rem;
                 border-radius: 12px;
                 box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
             }
             .form {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
-                gap: 0.5rem;
+                gap: 0.6rem;
+                margin-bottom: 0.75rem;
+            }
+            .form input,
+            .form textarea,
+            .form button {
+                padding: 0.6rem 0.7rem;
+                border-radius: 10px;
+                border: 1px solid #e5e7eb;
+            }
+            .form textarea {
+                min-height: 68px;
+            }
+            .form button {
+                background: linear-gradient(135deg, #3a6df0, #2c45c5);
+                color: #fff;
+                border: 0;
+                cursor: pointer;
+                font-weight: 600;
             }
             .list {
                 margin-top: 1rem;
             }
+            .day {
+                margin-top: 1rem;
+            }
+            .day h4 {
+                margin: 0.25rem 0 0.5rem;
+                color: #334155;
+            }
             .item {
-                border: 1px solid #eee;
-                padding: 0.6rem;
-                border-radius: 8px;
-                margin: 0.4rem 0;
+                border: 1px solid #e5e7eb;
+                padding: 0.7rem 0.8rem;
+                border-radius: 10px;
+                margin: 0.45rem 0;
+                background: #fff;
+            }
+            .when {
+                color: #475569;
+                font-size: 13px;
+            }
+            .title {
+                font-weight: 700;
+                margin: 2px 0 6px;
+            }
+            .meta {
+                color: #64748b;
+                font-size: 13px;
+            }
+            .notice {
+                text-align: center;
+                font-size: 13px;
+                margin: 6px 0;
+            }
+            .notice.error {
+                color: #b91c1c;
+            }
+            .notice.ok {
+                color: #065f46;
             }
         </style>
     </head>
@@ -43,10 +92,11 @@
                     placeholder="Description"
                     style="grid-column: 1 / span 2"
                 ></textarea>
-                <button onclick="createEvent()" style="grid-column: 1 / span 2">
+                <button onclick="submitEvent()" style="grid-column: 1 / span 2">
                     Create Event
                 </button>
             </div>
+            <div id="calNotice" class="notice"></div>
             <div class="list" id="eventList"></div>
         </div>
         <script>
@@ -55,50 +105,159 @@
                 window.location.replace("/auth.html");
             }
 
-            async function createEvent() {
+            async function submitEvent() {
+                const title = document.getElementById("title").value.trim();
+                const description = document
+                    .getElementById("description")
+                    .value.trim();
+                const location = document
+                    .getElementById("location")
+                    .value.trim();
+                const startRaw = document.getElementById("startAt").value;
+                const endRaw = document.getElementById("endAt").value;
+                const notice = document.getElementById("calNotice");
+                function setNotice(msg, ok = false) {
+                    if (!notice) return;
+                    notice.textContent = msg || "";
+                    notice.className = "notice " + (ok ? "ok" : "error");
+                }
+                if (
+                    !title ||
+                    !description ||
+                    !location ||
+                    !startRaw ||
+                    !endRaw
+                ) {
+                    setNotice(
+                        "Please fill in title, description, location, start and end.",
+                        false
+                    );
+                    return;
+                }
+                const startAt = new Date(startRaw);
+                const endAt = new Date(endRaw);
+                if (isNaN(startAt.getTime()) || isNaN(endAt.getTime())) {
+                    setNotice("Invalid date/time.", false);
+                    return;
+                }
+                if (endAt <= startAt) {
+                    setNotice("End time must be after start time.", false);
+                    return;
+                }
                 const payload = {
-                    title: document.getElementById("title").value.trim(),
-                    description: document
-                        .getElementById("description")
-                        .value.trim(),
-                    location: document.getElementById("location").value.trim(),
-                    startAt: new Date(
-                        document.getElementById("startAt").value
-                    ).toISOString(),
-                    endAt: new Date(
-                        document.getElementById("endAt").value
-                    ).toISOString(),
+                    title,
+                    description,
+                    location,
+                    startAt: startAt.toISOString(),
+                    endAt: endAt.toISOString(),
                 };
-                await fetch("/api/events", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`,
-                    },
-                    body: JSON.stringify(payload),
-                });
-                await loadEvents();
+                try {
+                    const res = await fetch("/api/events", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${token}`,
+                        },
+                        body: JSON.stringify(payload),
+                    });
+                    if (!res.ok) {
+                        const errText = await res.text().catch(() => "");
+                        setNotice(
+                            `❌ Failed to create: ${errText || res.status}`,
+                            false
+                        );
+                        return;
+                    }
+                    setNotice("✅ Event created.", true);
+                    // Clear inputs
+                    document.getElementById("title").value = "";
+                    document.getElementById("description").value = "";
+                    document.getElementById("location").value = "";
+                    document.getElementById("startAt").value = "";
+                    document.getElementById("endAt").value = "";
+                    await loadEvents();
+                } catch (e) {
+                    setNotice("❌ Network error. Please try again.", false);
+                }
             }
 
             async function loadEvents() {
+                const notice = document.getElementById("calNotice");
+                if (notice) {
+                    notice.textContent = "Loading…";
+                    notice.className = "notice";
+                }
                 const res = await fetch("/api/events", {
                     headers: { Authorization: `Bearer ${token}` },
                 });
+                if (res.status === 401) {
+                    window.location.replace("/auth.html");
+                    return;
+                }
                 const data = await res.json();
                 const list = document.getElementById("eventList");
                 list.innerHTML = "";
-                (data.events || []).forEach((e) => {
-                    const div = document.createElement("div");
-                    div.className = "item";
-                    div.innerHTML = `<strong>${e.title}</strong><br/>${new Date(
-                        e.startAt
-                    ).toLocaleString()} - ${new Date(
-                        e.endAt
-                    ).toLocaleString()}<br/>${e.location}<br/>${e.description}`;
-                    list.appendChild(div);
-                });
+                const events = (data.events || [])
+                    .slice()
+                    .sort((a, b) => new Date(a.startAt) - new Date(b.startAt));
+                if (events.length === 0) {
+                    const empty = document.createElement("div");
+                    empty.className = "notice";
+                    empty.textContent = "No upcoming events.";
+                    list.appendChild(empty);
+                    if (notice) notice.textContent = "";
+                    return;
+                }
+                // Group by day
+                const fmtDay = (d) =>
+                    new Date(d).toLocaleDateString(undefined, {
+                        weekday: "long",
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                    });
+                const groups = new Map();
+                for (const ev of events) {
+                    const key = new Date(ev.startAt).toDateString();
+                    if (!groups.has(key)) groups.set(key, []);
+                    groups.get(key).push(ev);
+                }
+                for (const [key, items] of groups.entries()) {
+                    const day = document.createElement("div");
+                    day.className = "day";
+                    const h = document.createElement("h4");
+                    h.textContent = fmtDay(items[0].startAt);
+                    day.appendChild(h);
+                    items.forEach((e) => {
+                        const div = document.createElement("div");
+                        div.className = "item";
+                        const start = new Date(e.startAt).toLocaleTimeString(
+                            [],
+                            { hour: "2-digit", minute: "2-digit" }
+                        );
+                        const end = new Date(e.endAt).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                        });
+                        div.innerHTML = `
+                            <div class="when">${start} – ${end}</div>
+                            <div class="title">${e.title}</div>
+                            <div class="meta">📍 ${e.location}</div>
+                            ${
+                                e.description
+                                    ? `<div style="margin-top:6px;">${e.description}</div>`
+                                    : ""
+                            }
+                        `;
+                        day.appendChild(div);
+                    });
+                    list.appendChild(day);
+                }
+                if (notice) notice.textContent = "";
             }
 
+            // ensure onclick can find the function (avoid name clash with document.createEvent)
+            window.submitEvent = submitEvent;
             loadEvents();
         </script>
         <script src="script.js"></script>

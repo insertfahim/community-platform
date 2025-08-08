@@ -136,7 +136,13 @@
                 (data.incidents || []).forEach((it) => {
                     const div = document.createElement("div");
                     div.className = "item";
-                    div.innerHTML = `<strong>${it.title}</strong> — ${it.status} | ${it.category}<br/>${it.description}<br/>📍 ${it.location}`;
+                    div.innerHTML = `<strong>${it.title}</strong> — ${
+                        it.status
+                    } | ${it.category} <span class="muted">by @${
+                        (it.reporterId &&
+                            (it.reporterId.username || it.reporterId.name)) ||
+                        "unknown"
+                    }</span><br/>${it.description}<br/>📍 ${it.location}`;
                     list.appendChild(div);
                 });
             }

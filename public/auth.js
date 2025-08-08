@@ -64,8 +64,10 @@ if (signUpBtn) {
                     data.message || "❌ Registration failed.";
                 return;
             }
-
-            alert("✅ Registered successfully!");
+            const note = document.getElementById("signupNote");
+            if (note)
+                note.innerText =
+                    "✅ Registered successfully. You can now sign in.";
             document.querySelector('.sign-up input[type="text"]').value = "";
             document.querySelector('.sign-up input[type="email"]').value = "";
             document.querySelector('.sign-up input[type="password"]').value =
@@ -113,7 +115,8 @@ if (signInBtn) {
                 return;
             }
 
-            alert("✅ Login successful!");
+            const note = document.getElementById("signinNote");
+            if (note) note.innerText = "✅ Logged in. Redirecting...";
             // store token for authenticated requests
             if (data.token) {
                 localStorage.setItem("auth_token", data.token);
@@ -123,6 +126,38 @@ if (signInBtn) {
         } catch (err) {
             console.error("Network error:", err);
             signinError.innerText = "❌ Network error. Please try again.";
+        }
+    });
+}
+
+// DEMO ACCOUNT LOGIN
+const demoBtn = document.getElementById("demoLoginBtn");
+if (demoBtn) {
+    demoBtn.addEventListener("click", async () => {
+        const signinError = document.getElementById("signinError");
+        if (signinError) signinError.innerText = "";
+        try {
+            const res = await fetch("/api/users/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    email: "john@example.com",
+                    password: "password",
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                signinError.innerText = data.message || "❌ Demo login failed.";
+                return;
+            }
+            if (data.token) {
+                localStorage.setItem("auth_token", data.token);
+                localStorage.setItem("user_id", data.userId);
+            }
+            window.location.href = "/";
+        } catch (err) {
+            console.error("Demo login error:", err);
+            if (signinError) signinError.innerText = "❌ Demo login error.";
         }
     });
 }

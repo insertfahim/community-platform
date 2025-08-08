@@ -19,6 +19,8 @@ const connectToDatabase = require("./config/db");
 const { attachUser } = require("./middleware/auth");
 
 const app = express();
+const REQUEST_LOGS_ENABLED =
+    String(process.env.REQUEST_LOGS_ENABLED || "true").toLowerCase() === "true";
 
 const corsOptions = {
     origin: ["http://localhost:3000", "http://127.0.0.1:3000"],
@@ -32,79 +34,82 @@ app.use(express.json());
 app.use(attachUser);
 
 app.use((req, res, next) => {
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
-    if (req.method === "POST" || req.method === "PUT") {
-        console.log("Request Body:", req.body);
+    if (REQUEST_LOGS_ENABLED) {
+        console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+        if (req.method === "POST" || req.method === "PUT") {
+            console.log("Request Body:", req.body);
+        }
     }
     next();
 });
 
 //API routes
-console.log("🔁 Loading API routes...");
+if (REQUEST_LOGS_ENABLED) console.log("🔁 Loading API routes...");
 
 app.use("/api/emergency", emergencyRoutes);
-console.log("✅ emergencyRoutes loaded");
+if (REQUEST_LOGS_ENABLED) console.log("✅ emergencyRoutes loaded");
 
 app.use("/api/posts", postRoutes);
-console.log("✅ postRoutes loaded");
+if (REQUEST_LOGS_ENABLED) console.log("✅ postRoutes loaded");
 
 app.use("/api/users", authRoutes);
-console.log("✅ authRoutes loaded");
+if (REQUEST_LOGS_ENABLED) console.log("✅ authRoutes loaded");
 
 app.use("/api/messages", messageRoutes);
-console.log("✅ messageRoutes loaded");
+if (REQUEST_LOGS_ENABLED) console.log("✅ messageRoutes loaded");
 
 app.use("/api/events", eventRoutes);
-console.log("✅ eventRoutes loaded");
+if (REQUEST_LOGS_ENABLED) console.log("✅ eventRoutes loaded");
 
 app.use("/api/donations", donationRoutes);
-console.log("✅ donationRoutes loaded");
+if (REQUEST_LOGS_ENABLED) console.log("✅ donationRoutes loaded");
 
 app.use("/api/learning", learningRoutes);
-console.log("✅ learningRoutes loaded");
+if (REQUEST_LOGS_ENABLED) console.log("✅ learningRoutes loaded");
 
 app.use("/api/incidents", incidentRoutes);
-console.log("✅ incidentRoutes loaded");
+if (REQUEST_LOGS_ENABLED) console.log("✅ incidentRoutes loaded");
 
 app.use("/api/history", historyRoutes);
-console.log("✅ historyRoutes loaded");
+if (REQUEST_LOGS_ENABLED) console.log("✅ historyRoutes loaded");
 
 app.use("/api/volunteers", volunteerRoutes);
-console.log("✅ volunteerRoutes loaded");
+if (REQUEST_LOGS_ENABLED) console.log("✅ volunteerRoutes loaded");
 
 app.use("/api/admin", adminRoutes);
-console.log("✅ adminRoutes loaded");
+if (REQUEST_LOGS_ENABLED) console.log("✅ adminRoutes loaded");
 
 app.use(express.static("public"));
 
 // html Routes
 app.get("/", (req, res) => {
-    console.log("📄 Serving index.html");
+    if (REQUEST_LOGS_ENABLED) console.log("📄 Serving index.html");
     res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 app.get("/post", (req, res) => {
-    console.log("📄 Serving post.html");
+    if (REQUEST_LOGS_ENABLED) console.log("📄 Serving post.html");
     res.sendFile(path.join(__dirname, "public", "post.html"));
 });
 
 app.get("/auth", (req, res) => {
-    console.log("📄 Serving auth.html");
+    if (REQUEST_LOGS_ENABLED) console.log("📄 Serving auth.html");
     res.sendFile(path.join(__dirname, "public", "auth.html"));
 });
 
 app.get("/emergency.html", (req, res) => {
-    console.log("📄 Serving emergency.html");
+    if (REQUEST_LOGS_ENABLED) console.log("📄 Serving emergency.html");
     res.sendFile(path.join(__dirname, "public", "emergency.html"));
 });
 
 app.use((req, res, next) => {
-    console.warn(`❌ 404 - Not Found: ${req.method} ${req.path}`);
+    if (REQUEST_LOGS_ENABLED)
+        console.warn(`❌ 404 - Not Found: ${req.method} ${req.path}`);
     res.status(404).json({ message: "Route not found" });
 });
 
 app.use((err, req, res, next) => {
-    console.error("❌ Server Error:", err);
+    if (REQUEST_LOGS_ENABLED) console.error("❌ Server Error:", err);
     res.status(500).json({
         message: "Internal server error",
         error: err.message,
@@ -113,6 +118,7 @@ app.use((err, req, res, next) => {
 
 connectToDatabase().then(() => {
     app.listen(PORT, "0.0.0.0", () => {
-        console.log(`🚀 Server running at http://localhost:${PORT}`);
+        if (REQUEST_LOGS_ENABLED)
+            console.log(`🚀 Server running at http://localhost:${PORT}`);
     });
 });

@@ -4,6 +4,7 @@ const crypto = require("crypto");
 const userSchema = new mongoose.Schema(
     {
         name: { type: String, required: true },
+        username: { type: String, unique: true, sparse: true },
         email: { type: String, required: true, unique: true },
         password: { type: String, required: true },
         isVolunteer: { type: Boolean, default: false },
@@ -64,9 +65,37 @@ const findUserByEmail = async (email) => {
     return { ...user, id: user._id.toString() };
 };
 
+async function generateUniqueUsername(base) {
+    const cleaned = (base || "user")
+        .toLowerCase()
+        .replace(/[^a-z0-9._-]/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^[-_.]+|[-_.]+$/g, "");
+    let candidate = cleaned || "user";
+    let n = 0;
+    // Try with suffixes until unique
+    // Limit attempts to avoid infinite loop
+    for (let i = 0; i < 100; i += 1) {
+        const probe = n === 0 ? candidate : `${candidate}${n}`;
+        // eslint-disable-next-line no-await-in-loop
+        const exists = await UserModel.exists({ username: probe });
+        if (!exists) return probe;
+        n += 1;
+    }
+    // Fallback with random suffix
+    return `${candidate}${Date.now().toString(36).slice(-4)}`;
+}
+
 const createUser = async ({ name, email, password }) => {
     const hashed = hashPassword(password);
-    const doc = await UserModel.create({ name, email, password: hashed });
+    const baseFromEmail = (email || "").split("@")[0] || name || "user";
+    const username = await generateUniqueUsername(baseFromEmail);
+    const doc = await UserModel.create({
+        name,
+        email,
+        username,
+        password: hashed,
+    });
     return doc._id.toString();
 };
 
@@ -96,7 +125,7 @@ const verifyVolunteer = async (userId, verified) => {
 
 const listVolunteers = async () => {
     return UserModel.find({ isVolunteer: true })
-        .select("name email isVolunteerVerified created_at")
+        .select("name username isVolunteerVerified created_at")
         .lean();
 };
 
@@ -110,4 +139,11 @@ module.exports = {
     requestVolunteer,
     verifyVolunteer,
     listVolunteers,
+    generateUniqueUsername,
+    // finder by username for messaging
+    findUserByUsername: async (username) => {
+        const user = await UserModel.findOne({ username }).lean();
+        if (!user) return undefined;
+        return { ...user, id: user._id.toString() };
+    },
 };

@@ -136,7 +136,14 @@
                 (data.donations || []).forEach((d) => {
                     const div = document.createElement("div");
                     div.className = "item";
-                    div.innerHTML = `<strong>${d.kind}</strong> — ${d.status}<br/>${d.description}<br/>📍 ${d.location} | ☎️ ${d.contact}`;
+                    div.innerHTML = `<strong>${d.kind}</strong> — ${
+                        d.status
+                    } <span class="muted">by @${
+                        (d.ownerId && (d.ownerId.username || d.ownerId.name)) ||
+                        "unknown"
+                    }</span><br/>${d.description}<br/>📍 ${d.location} | ☎️ ${
+                        d.contact
+                    }`;
                     list.appendChild(div);
                 });
             }

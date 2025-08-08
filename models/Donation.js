@@ -33,11 +33,15 @@ const createDonation = async (data) => {
 };
 
 const listDonations = async (filters = {}) => {
-    const { kind, status } = filters;
+    const { kind, status, ownerId } = filters;
     const query = {};
     if (kind) query.kind = kind;
     if (status) query.status = status;
-    return DonationModel.find(query).sort({ createdAt: -1 }).lean();
+    if (ownerId) query.ownerId = ownerId;
+    return DonationModel.find(query)
+        .populate({ path: "ownerId", select: "username name" })
+        .sort({ createdAt: -1 })
+        .lean();
 };
 
 const updateDonationStatus = async (id, status) => {
@@ -49,9 +53,33 @@ const updateDonationStatus = async (id, status) => {
     return doc ? doc._id.toString() : undefined;
 };
 
+const updateDonation = async (id, ownerId, updates) => {
+    const allowed = ["kind", "description", "location", "contact", "status"];
+    const safe = {};
+    Object.keys(updates || {}).forEach((k) => {
+        if (allowed.includes(k)) safe[k] = updates[k];
+    });
+    const doc = await DonationModel.findOneAndUpdate(
+        { _id: id, ownerId },
+        { $set: safe },
+        { new: true }
+    ).lean();
+    return doc ? doc._id.toString() : undefined;
+};
+
+const deleteDonation = async (id, ownerId) => {
+    const doc = await DonationModel.findOneAndDelete({
+        _id: id,
+        ownerId,
+    }).lean();
+    return !!doc;
+};
+
 module.exports = {
     DonationModel,
     createDonation,
     listDonations,
     updateDonationStatus,
+    updateDonation,
+    deleteDonation,
 };

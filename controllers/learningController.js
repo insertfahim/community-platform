@@ -1,6 +1,8 @@
 const {
     createLearningItem,
     listLearningItems,
+    updateLearningItem,
+    deleteLearningItem,
 } = require("../models/LearningItem");
 const { addLog } = require("../models/HistoryLog");
 
@@ -32,9 +34,35 @@ const create = async (req, res) => {
 };
 
 const list = async (req, res) => {
-    const { kind, subject } = req.query;
-    const items = await listLearningItems({ kind, subject });
+    const { kind, subject, ownerId } = req.query;
+    const items = await listLearningItems({ kind, subject, ownerId });
     res.json({ items });
 };
 
-module.exports = { create, list };
+const update = async (req, res) => {
+    if (!ensureAuth(req, res)) return;
+    const { id } = req.params;
+    const updated = await updateLearningItem(id, req.user.id, req.body || {});
+    if (!updated) return res.status(404).json({ message: "Item not found" });
+    await addLog({
+        userId: req.user.id,
+        action: "learning_item_updated",
+        meta: { id },
+    });
+    res.json({ message: "Updated" });
+};
+
+const remove = async (req, res) => {
+    if (!ensureAuth(req, res)) return;
+    const { id } = req.params;
+    const ok = await deleteLearningItem(id, req.user.id);
+    if (!ok) return res.status(404).json({ message: "Item not found" });
+    await addLog({
+        userId: req.user.id,
+        action: "learning_item_deleted",
+        meta: { id },
+    });
+    res.json({ message: "Deleted" });
+};
+
+module.exports = { create, list, update, remove };

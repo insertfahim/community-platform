@@ -46,6 +46,7 @@ function attachUser(req, _res, next) {
             id: payload.sub,
             email: payload.email,
             role: payload.role,
+            username: payload.username,
         };
     }
     next();
@@ -60,7 +61,12 @@ function requireAuth(req, res, next) {
     if (!payload) {
         return res.status(401).json({ message: "Invalid token" });
     }
-    req.user = { id: payload.sub, email: payload.email, role: payload.role };
+    req.user = {
+        id: payload.sub,
+        email: payload.email,
+        role: payload.role,
+        username: payload.username,
+    };
     next();
 }
 

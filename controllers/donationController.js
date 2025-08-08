@@ -2,6 +2,8 @@ const {
     createDonation,
     listDonations,
     updateDonationStatus,
+    updateDonation,
+    deleteDonation,
 } = require("../models/Donation");
 const { addLog } = require("../models/HistoryLog");
 
@@ -35,8 +37,8 @@ const create = async (req, res) => {
 };
 
 const list = async (req, res) => {
-    const { kind, status } = req.query;
-    const donations = await listDonations({ kind, status });
+    const { kind, status, ownerId } = req.query;
+    const donations = await listDonations({ kind, status, ownerId });
     res.json({ donations });
 };
 
@@ -62,4 +64,29 @@ module.exports = {
     create,
     list,
     updateStatus,
+    update: async (req, res) => {
+        if (!ensureAuth(req, res)) return;
+        const { id } = req.params;
+        const updated = await updateDonation(id, req.user.id, req.body || {});
+        if (!updated)
+            return res.status(404).json({ message: "Donation not found" });
+        await addLog({
+            userId: req.user.id,
+            action: "donation_updated",
+            meta: { donationId: id },
+        });
+        res.json({ message: "Updated" });
+    },
+    remove: async (req, res) => {
+        if (!ensureAuth(req, res)) return;
+        const { id } = req.params;
+        const ok = await deleteDonation(id, req.user.id);
+        if (!ok) return res.status(404).json({ message: "Donation not found" });
+        await addLog({
+            userId: req.user.id,
+            action: "donation_deleted",
+            meta: { donationId: id },
+        });
+        res.json({ message: "Deleted" });
+    },
 };

@@ -36,7 +36,11 @@ const listIncidents = async (filters = {}) => {
     const query = {};
     if (filters.category) query.category = filters.category;
     if (filters.status) query.status = filters.status;
-    return IncidentModel.find(query).sort({ createdAt: -1 }).lean();
+    if (filters.reporterId) query.reporterId = filters.reporterId;
+    return IncidentModel.find(query)
+        .populate({ path: "reporterId", select: "username name" })
+        .sort({ createdAt: -1 })
+        .lean();
 };
 
 const updateIncident = async (id, updates) => {
@@ -48,9 +52,18 @@ const updateIncident = async (id, updates) => {
     return doc ? doc._id.toString() : undefined;
 };
 
+const deleteIncident = async (id, reporterId) => {
+    const doc = await IncidentModel.findOneAndDelete({
+        _id: id,
+        reporterId,
+    }).lean();
+    return !!doc;
+};
+
 module.exports = {
     IncidentModel,
     createIncident,
     listIncidents,
     updateIncident,
+    deleteIncident,
 };

@@ -27,11 +27,39 @@ const listLearningItems = async (filters = {}) => {
     const query = {};
     if (filters.kind) query.kind = filters.kind;
     if (filters.subject) query.subject = filters.subject;
-    return LearningItemModel.find(query).sort({ createdAt: -1 }).lean();
+    if (filters.ownerId) query.ownerId = filters.ownerId;
+    return LearningItemModel.find(query)
+        .populate({ path: "ownerId", select: "username name" })
+        .sort({ createdAt: -1 })
+        .lean();
+};
+
+const updateLearningItem = async (id, ownerId, updates) => {
+    const allowed = ["kind", "subject", "details"];
+    const safe = {};
+    Object.keys(updates || {}).forEach((k) => {
+        if (allowed.includes(k)) safe[k] = updates[k];
+    });
+    const doc = await LearningItemModel.findOneAndUpdate(
+        { _id: id, ownerId },
+        { $set: safe },
+        { new: true }
+    ).lean();
+    return doc ? doc._id.toString() : undefined;
+};
+
+const deleteLearningItem = async (id, ownerId) => {
+    const doc = await LearningItemModel.findOneAndDelete({
+        _id: id,
+        ownerId,
+    }).lean();
+    return !!doc;
 };
 
 module.exports = {
     LearningItemModel,
     createLearningItem,
     listLearningItems,
+    updateLearningItem,
+    deleteLearningItem,
 };

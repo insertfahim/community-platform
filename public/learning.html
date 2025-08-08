@@ -5,125 +5,128 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Learning Exchange</title>
         <link rel="stylesheet" href="styles.css" />
-        <style>
-            .container {
-                max-width: 900px;
-                margin: 2rem auto;
-                background: #fff;
-                padding: 1rem;
-                border-radius: 12px;
-                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-            }
-            .form {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 0.5rem;
-            }
-            .list {
-                margin-top: 1rem;
-            }
-            .item {
-                border: 1px solid #eee;
-                padding: 0.6rem;
-                border-radius: 8px;
-                margin: 0.4rem 0;
-                background: #fff;
-            }
-        </style>
+        <link rel="stylesheet" href="learning.css" />
     </head>
     <body>
-        <div class="container">
-            <h2>Community Learning Exchange</h2>
-            <div class="form">
-                <select id="kind">
-                    <option value="offer">Offering</option>
-                    <option value="request">Requesting</option>
-                </select>
-                <input
-                    id="subject"
-                    placeholder="Subject (e.g., Math, English, JavaScript)"
-                />
-                <textarea
-                    id="details"
-                    placeholder="Details"
-                    style="grid-column: 1 / span 2"
-                ></textarea>
-                <button onclick="createItem()" style="grid-column: 1 / span 2">
-                    Post Item
+        <main class="learning-page">
+            <section class="learning-hero">
+                <h1>Community Learning Exchange</h1>
+                <p>
+                    Offer your skills or request help. Learn together, faster.
+                </p>
+            </section>
+
+            <section class="learning-toolbar">
+                <div class="learning-search">
+                    <input
+                        id="learn-search"
+                        type="text"
+                        placeholder="Search by subject or details..."
+                        aria-label="Search learning items"
+                    />
+                </div>
+                <div class="learning-filters">
+                    <label class="sr-only" for="learn-kind">Type</label>
+                    <select id="learn-kind" aria-label="Filter by type">
+                        <option value="">All types</option>
+                        <option value="offer">Offers</option>
+                        <option value="request">Requests</option>
+                    </select>
+                    <label class="sr-only" for="learn-sort">Sort</label>
+                    <select id="learn-sort" aria-label="Sort results">
+                        <option value="newest">Newest</option>
+                        <option value="oldest">Oldest</option>
+                        <option value="az">Subject A–Z</option>
+                        <option value="za">Subject Z–A</option>
+                    </select>
+                    <button id="learn-clear" type="button">Clear</button>
+                </div>
+                <div class="learning-stats">
+                    <span id="learn-count">0</span>
+                    <span class="muted">results</span>
+                </div>
+            </section>
+
+            <section class="learning-grid-section">
+                <div
+                    id="learning-grid"
+                    class="learning-grid"
+                    aria-live="polite"
+                ></div>
+                <div id="learn-empty" class="learning-empty" hidden>
+                    <div class="illustration" aria-hidden="true">📚</div>
+                    <h3>No items found</h3>
+                    <p>
+                        Try adjusting filters or posting the first learning
+                        item.
+                    </p>
+                </div>
+            </section>
+
+            <section class="learning-create" data-requires-auth>
+                <h2>Share your knowledge</h2>
+                <div class="create-form">
+                    <div class="row">
+                        <label for="learn-kind-create" class="sr-only"
+                            >Type</label
+                        >
+                        <select id="learn-kind-create">
+                            <option value="offer">Offering</option>
+                            <option value="request">Requesting</option>
+                        </select>
+                        <label for="learn-subject" class="sr-only"
+                            >Subject</label
+                        >
+                        <input
+                            id="learn-subject"
+                            type="text"
+                            placeholder="Subject (e.g., Math, English, JavaScript)"
+                        />
+                    </div>
+                    <div class="row">
+                        <label for="learn-details" class="sr-only"
+                            >Details</label
+                        >
+                        <textarea
+                            id="learn-details"
+                            rows="3"
+                            placeholder="Add a short description..."
+                        ></textarea>
+                    </div>
+                    <div class="row actions">
+                        <button id="learn-post" type="button">Post Item</button>
+                        <span
+                            id="learn-status"
+                            class="status"
+                            role="status"
+                            aria-live="polite"
+                        ></span>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Modal for item details -->
+        <div id="learn-modal" class="learn-modal" hidden>
+            <div class="learn-modal__backdrop" data-close-modal></div>
+            <div
+                class="learn-modal__dialog"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="learn-modal-title"
+            >
+                <button
+                    class="learn-modal__close"
+                    aria-label="Close"
+                    data-close-modal
+                >
+                    ×
                 </button>
+                <div id="learn-modal-body"></div>
             </div>
-            <div style="margin-top: 1rem; display: flex; gap: 0.5rem">
-                <select id="fKind" onchange="loadItems()">
-                    <option value="">All</option>
-                    <option value="offer">Offer</option>
-                    <option value="request">Request</option>
-                </select>
-                <input
-                    id="fSubject"
-                    placeholder="Filter by subject"
-                    oninput="loadItems()"
-                />
-            </div>
-            <div class="list" id="items"></div>
         </div>
-        <script>
-            const token = localStorage.getItem("auth_token");
-            (function gateCreateUI() {
-                const container = document.querySelector(".container");
-                const formEl = document.querySelector(".form");
-                if (!container || !formEl) return;
-                if (!token) {
-                    formEl.style.display = "none";
-                    const notice = document.createElement("div");
-                    notice.style.margin = "0.5rem 0 1rem";
-                    notice.style.padding = "0.6rem 0.8rem";
-                    notice.style.background = "#fff7ed";
-                    notice.style.border = "1px solid #fed7aa";
-                    notice.style.borderRadius = "8px";
-                    notice.textContent =
-                        "Please log in to post a learning item.";
-                    container.insertBefore(notice, formEl);
-                }
-            })();
-            async function createItem() {
-                const payload = {
-                    kind: document.getElementById("kind").value,
-                    subject: document.getElementById("subject").value.trim(),
-                    details: document.getElementById("details").value.trim(),
-                };
-                await fetch("/api/learning", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`,
-                    },
-                    body: JSON.stringify(payload),
-                });
-                await loadItems();
-            }
-            async function loadItems() {
-                const params = new URLSearchParams();
-                const kind = document.getElementById("fKind").value;
-                const subject = document
-                    .getElementById("fSubject")
-                    .value.trim();
-                if (kind) params.set("kind", kind);
-                if (subject) params.set("subject", subject);
-                const res = await fetch("/api/learning?" + params.toString());
-                const data = await res.json();
-                const list = document.getElementById("items");
-                list.innerHTML = "";
-                (data.items || []).forEach((it) => {
-                    const div = document.createElement("div");
-                    div.className = "item";
-                    div.innerHTML = `<strong>${it.kind.toUpperCase()}</strong> — ${
-                        it.subject
-                    }<br/>${it.details}`;
-                    list.appendChild(div);
-                });
-            }
-            loadItems();
-        </script>
+
         <script src="script.js"></script>
+        <script src="learning.js"></script>
     </body>
 </html>

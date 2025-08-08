@@ -61,6 +61,8 @@
                 if (category) params.set("category", category);
                 if (type) params.set("type", type);
                 if (status) params.set("status", status);
+                // Ask backend for smart feed ordering
+                params.set("sort", "smart");
                 const res = await fetch("/api/posts?" + params.toString());
                 const data = await res.json();
                 const list = document.getElementById("feedList");
@@ -74,6 +76,10 @@
             <span class="badge">${p.category}</span>
             <span class="status">${p.status}</span>
             <span>${new Date(p.createdAt).toLocaleString()}</span>
+            <span>by @${
+                (p.ownerId && (p.ownerId.username || p.ownerId.name)) ||
+                "unknown"
+            }</span>
           </div>
           <h3>${p.title}</h3>
           <p>${p.description}</p>

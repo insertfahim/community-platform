@@ -13,6 +13,7 @@ const record = async (req, res) => {
     const { action, meta } = req.body;
     if (!action) return res.status(400).json({ message: "action required" });
     const id = await addLog({ userId: req.user.id, action, meta });
+    // When logging disabled, id will be null; still return 201
     res.status(201).json({ id });
 };
 

@@ -2,6 +2,7 @@ const {
     createIncident,
     listIncidents,
     updateIncident,
+    deleteIncident,
 } = require("../models/Incident");
 const { addLog } = require("../models/HistoryLog");
 
@@ -35,8 +36,8 @@ const create = async (req, res) => {
 };
 
 const list = async (req, res) => {
-    const { category, status } = req.query;
-    const items = await listIncidents({ category, status });
+    const { category, status, reporterId } = req.query;
+    const items = await listIncidents({ category, status, reporterId });
     res.json({ incidents: items });
 };
 
@@ -64,3 +65,15 @@ const update = async (req, res) => {
 };
 
 module.exports = { create, list, update };
+module.exports.remove = async (req, res) => {
+    if (!ensureAuth(req, res)) return;
+    const { id } = req.params;
+    const ok = await deleteIncident(id, req.user.id);
+    if (!ok) return res.status(404).json({ message: "Incident not found" });
+    await addLog({
+        userId: req.user.id,
+        action: "incident_deleted",
+        meta: { incidentId: id },
+    });
+    res.json({ message: "Deleted" });
+};

@@ -14,11 +14,11 @@
                 <h2>Welcome</h2>
                 <label>
                     <span>Email</span>
-                    <input type="email" />
+                    <input type="email" placeholder="you@example.com" />
                 </label>
                 <label>
                     <span>Password</span>
-                    <input type="password" />
+                    <input type="password" placeholder="••••••••" />
                 </label>
                 <p class="forgot-pass">Forgot password?</p>
                 <button type="button" class="submit">Sign In</button>
@@ -31,6 +31,13 @@
                         margin-top: 10px;
                     "
                 ></p>
+                <p id="signinNote" class="notice" aria-live="polite"></p>
+                <div class="demo-cta">
+                    <div class="demo-subtitle">Just trying it out?</div>
+                    <button id="demoLoginBtn" type="button" class="demo-btn">
+                        ✨ Use Demo Account
+                    </button>
+                </div>
             </div>
 
             <div class="sub-cont">
@@ -74,6 +81,7 @@
                             margin-top: 10px;
                         "
                     ></p>
+                    <p id="signupNote" class="notice" aria-live="polite"></p>
                 </div>
             </div>
         </div>
