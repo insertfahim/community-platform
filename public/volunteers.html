@@ -7,90 +7,597 @@
         <link rel="stylesheet" href="styles.css" />
         <style>
             .container {
-                max-width: 900px;
+                max-width: 1100px;
                 margin: 2rem auto;
                 background: #fff;
                 padding: 1rem;
                 border-radius: 12px;
                 box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
             }
-            .item {
-                border: 1px solid #eee;
-                padding: 0.6rem;
-                border-radius: 8px;
-                margin: 0.4rem 0;
-                background: #fff;
+            .header {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
+                gap: 1rem;
+                flex-wrap: wrap;
             }
-            .muted {
-                color: #666;
+            .search-row {
+                display: flex;
+                gap: 8px;
+                flex-wrap: wrap;
+                margin: 0.75rem 0 1rem 0;
             }
-            button {
-                padding: 0.45rem 0.8rem;
+            .search-row input,
+            .search-row select,
+            .search-row button {
+                padding: 0.5rem 0.7rem;
+                border: 1px solid #e4e4e7;
                 border-radius: 8px;
+            }
+            .search-row button.primary {
                 background: #2c45c5;
                 color: #fff;
                 border: 0;
                 cursor: pointer;
             }
+            .grid {
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 12px;
+            }
+            @media (max-width: 980px) {
+                .grid {
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                }
+            }
+            @media (max-width: 640px) {
+                .grid {
+                    grid-template-columns: 1fr;
+                }
+            }
+            .card {
+                border: 1px solid #eee;
+                border-radius: 12px;
+                padding: 12px;
+                background: #fff;
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+            .pill {
+                display: inline-block;
+                padding: 2px 8px;
+                border-radius: 999px;
+                font-size: 12px;
+                background: #eef;
+                margin-right: 6px;
+            }
+            .muted {
+                color: #52525b;
+                font-size: 14px;
+            }
+            .row {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 8px;
+            }
+            .actions {
+                display: flex;
+                gap: 8px;
+            }
+            .btn {
+                padding: 0.45rem 0.8rem;
+                border-radius: 8px;
+                background: #f4f4f5;
+                color: #18181b;
+                border: 1px solid #e6e6e7;
+                cursor: pointer;
+            }
+            .btn.primary {
+                background: #2c45c5;
+                color: #fff;
+                border: 0;
+            }
+            .section {
+                margin-top: 1.25rem;
+            }
+            .split {
+                display: grid;
+                grid-template-columns: 2fr 1fr;
+                gap: 16px;
+            }
+            @media (max-width: 980px) {
+                .split {
+                    grid-template-columns: 1fr;
+                }
+            }
+            .form {
+                border: 1px solid #eee;
+                border-radius: 12px;
+                padding: 12px;
+                background: #fafafa;
+            }
+            .form .row {
+                gap: 10px;
+            }
+            .form label {
+                font-size: 12px;
+                color: #555;
+                display: block;
+                margin-top: 10px;
+            }
+            .form input,
+            .form textarea,
+            .form select {
+                width: 100%;
+                padding: 0.55rem 0.7rem;
+                border: 1px solid #e4e4e7;
+                border-radius: 8px;
+                background: #fff;
+            }
+            .chips {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 6px;
+                margin-top: 6px;
+            }
+            .chip {
+                padding: 4px 10px;
+                border-radius: 999px;
+                border: 1px solid #e4e4e7;
+                background: #fff;
+                cursor: pointer;
+                font-size: 13px;
+            }
+            .chip.selected {
+                background: #2c45c5;
+                color: #fff;
+                border-color: #2c45c5;
+            }
+            .admin-queue {
+                border: 1px dashed #d4d4d8;
+                padding: 12px;
+                border-radius: 12px;
+            }
         </style>
     </head>
     <body>
         <div class="container">
-            <h2>Verified Volunteers</h2>
-            <div style="margin: 0.5rem 0">
-                <button id="requestBtn" onclick="requestVolunteer()">
-                    Request Volunteer Verification
-                </button>
+            <div class="header">
+                <div>
+                    <h2>Volunteers</h2>
+                    <div class="muted">
+                        Find verified helpers by skills, location, and
+                        availability
+                    </div>
+                </div>
+                <div class="row">
+                    <div
+                        id="statusBadge"
+                        class="pill"
+                        style="display: none"
+                    ></div>
+                    <button id="requestBtn" class="btn primary">
+                        Apply to Volunteer
+                    </button>
+                </div>
             </div>
-            <div id="volunteers"></div>
+
+            <div class="search-row">
+                <input id="q" placeholder="Search name, skills, bio..." />
+                <input id="location" placeholder="Location" />
+                <select id="verified">
+                    <option value="">Verification: Any</option>
+                    <option value="true">Verified</option>
+                    <option value="false">Pending</option>
+                </select>
+                <select id="skillSelect">
+                    <option value="">Skill: Any</option>
+                    <option>driving</option>
+                    <option>first aid</option>
+                    <option>childcare</option>
+                    <option>tutoring</option>
+                    <option>translation</option>
+                    <option>logistics</option>
+                </select>
+                <button class="btn" onclick="applyFilters()">Filter</button>
+                <button class="btn" onclick="clearFilters()">Clear</button>
+            </div>
+
+            <div class="split">
+                <div>
+                    <div id="volunteerGrid" class="grid"></div>
+                </div>
+                <div>
+                    <div class="form">
+                        <h3 style="margin-bottom: 6px">Application</h3>
+                        <div class="muted">
+                            Tell us about your skills and availability
+                        </div>
+                        <label>Short bio</label>
+                        <textarea
+                            id="bio"
+                            rows="3"
+                            placeholder="Why do you want to volunteer? Relevant experience"
+                        ></textarea>
+                        <label>Location</label>
+                        <input id="v_location" placeholder="City / Area" />
+                        <label>Phone</label>
+                        <input id="phone" placeholder="Contact number" />
+                        <label>Skills</label>
+                        <div id="skillsChips" class="chips"></div>
+                        <label>Roles</label>
+                        <div id="rolesChips" class="chips"></div>
+                        <label>Availability</label>
+                        <div id="availabilityChips" class="chips"></div>
+                        <div class="row" style="margin-top: 8px">
+                            <div style="flex: 1">
+                                <label>Hours per week</label>
+                                <input
+                                    id="hoursPerWeek"
+                                    type="number"
+                                    min="1"
+                                    max="60"
+                                />
+                            </div>
+                            <div style="flex: 1">
+                                <label>Experience (years)</label>
+                                <input
+                                    id="experienceYears"
+                                    type="number"
+                                    min="0"
+                                    max="50"
+                                />
+                            </div>
+                        </div>
+                        <button
+                            id="submitApplication"
+                            class="btn primary"
+                            style="margin-top: 10px"
+                        >
+                            Submit Application
+                        </button>
+                        <div
+                            id="applyInfo"
+                            class="muted"
+                            style="margin-top: 8px"
+                        ></div>
+                    </div>
+
+                    <div id="adminQueue" class="section" style="display: none">
+                        <h3>Admin Review Queue</h3>
+                        <div class="admin-queue" id="queueList"></div>
+                    </div>
+                </div>
+            </div>
         </div>
+
         <script>
             const token = localStorage.getItem("auth_token");
-            (function gateRequest() {
-                const btn = document.getElementById("requestBtn");
-                if (!btn) return;
-                if (!token) {
-                    btn.style.display = "none";
-                    const info = document.createElement("div");
-                    info.className = "muted";
-                    info.style.margin = "0.5rem 0";
-                    info.textContent =
-                        "Log in to request volunteer verification.";
-                    btn.parentElement.appendChild(info);
-                }
-            })();
-            async function loadVolunteers() {
-                const res = await fetch("/api/volunteers");
-                const data = await res.json();
-                const list = document.getElementById("volunteers");
-                list.innerHTML = "";
-                (data.volunteers || []).forEach((v) => {
-                    const div = document.createElement("div");
-                    div.className = "item";
-                    div.innerHTML = `<div><strong>${
-                        v.name
-                    }</strong> <span class='muted'>${
-                        v.email
-                    }</span></div><div>${
-                        v.isVolunteerVerified ? "✅ Verified" : "⏳ Pending"
-                    }</div>`;
-                    list.appendChild(div);
+            const skillOptions = [
+                "driving",
+                "first aid",
+                "childcare",
+                "tutoring",
+                "translation",
+                "logistics",
+            ];
+            const roleOptions = [
+                "driver",
+                "tutor",
+                "caregiver",
+                "cook",
+                "organizer",
+                "dispatcher",
+            ];
+            const availabilityOptions = [
+                "weekdays",
+                "weekends",
+                "mornings",
+                "afternoons",
+                "evenings",
+            ];
+
+            function buildChips(containerId, options) {
+                const el = document.getElementById(containerId);
+                el.innerHTML = "";
+                options.forEach((opt) => {
+                    const b = document.createElement("button");
+                    b.className = "chip";
+                    b.textContent = opt;
+                    b.onclick = () => b.classList.toggle("selected");
+                    el.appendChild(b);
                 });
             }
-            async function requestVolunteer() {
-                if (!token)
-                    return alert("Please log in first on the Auth page.");
-                await fetch("/api/volunteers/request", {
-                    method: "POST",
-                    headers: { Authorization: `Bearer ${token}` },
+
+            function selectedFrom(containerId) {
+                return Array.from(
+                    document.querySelectorAll(
+                        "#" + containerId + " .chip.selected"
+                    )
+                ).map((x) => x.textContent);
+            }
+
+            async function gateRequest() {
+                const btn = document.getElementById("requestBtn");
+                const applyBtn = document.getElementById("submitApplication");
+                const info = document.getElementById("applyInfo");
+                if (!token) {
+                    if (btn) btn.style.display = "none";
+                    if (applyBtn) applyBtn.disabled = true;
+                    if (info)
+                        info.textContent = "Log in to apply to volunteer.";
+                    return;
+                }
+                try {
+                    const meRes = await fetch("/api/users/me", {
+                        headers: { Authorization: `Bearer ${token}` },
+                    });
+                    if (!meRes.ok) return;
+                    const { user } = await meRes.json();
+                    if (!user) return;
+                    const status = user.isVolunteerVerified
+                        ? "Verified"
+                        : user.isVolunteer
+                        ? "Pending"
+                        : "Not applied";
+                    const badge = document.getElementById("statusBadge");
+                    if (badge) {
+                        badge.style.display = "";
+                        badge.textContent = `Status: ${status}`;
+                        badge.style.background = user.isVolunteerVerified
+                            ? "#def7ec"
+                            : user.isVolunteer
+                            ? "#fef3c7"
+                            : "#eef";
+                    }
+                    const prof = user.volunteerProfile || {};
+                    if (prof.bio)
+                        document.getElementById("bio").value = prof.bio;
+                    if (prof.location)
+                        document.getElementById("v_location").value =
+                            prof.location;
+                    if (prof.phone)
+                        document.getElementById("phone").value = prof.phone;
+                    if (typeof prof.hoursPerWeek === "number")
+                        document.getElementById("hoursPerWeek").value =
+                            prof.hoursPerWeek;
+                    if (typeof prof.experienceYears === "number")
+                        document.getElementById("experienceYears").value =
+                            prof.experienceYears;
+                    const preselect = (containerId, values) => {
+                        if (!Array.isArray(values)) return;
+                        const nodes = document.querySelectorAll(
+                            "#" + containerId + " .chip"
+                        );
+                        nodes.forEach((n) => {
+                            if (values.includes(n.textContent))
+                                n.classList.add("selected");
+                        });
+                    };
+                    preselect("skillsChips", prof.skills);
+                    preselect("rolesChips", prof.roles);
+                    preselect("availabilityChips", prof.availability);
+                } catch (_) {
+                    /* ignore */
+                }
+            }
+
+            async function loadVolunteers(params = {}) {
+                const url = new URL(window.location.origin + "/api/volunteers");
+                Object.entries(params).forEach(([k, v]) => {
+                    if (v === undefined || v === null || v === "") return;
+                    url.searchParams.set(k, v);
                 });
-                alert("Request submitted. An admin will review.");
+                const res = await fetch(url);
+                const data = await res.json();
+                const grid = document.getElementById("volunteerGrid");
+                grid.innerHTML = "";
+                (data.volunteers || []).forEach((v) => {
+                    const card = document.createElement("div");
+                    card.className = "card";
+                    const verified = v.isVolunteerVerified;
+                    const prof = v.volunteerProfile || {};
+                    const skills = (prof.skills || []).slice(0, 6);
+                    const roles = (prof.roles || []).slice(0, 4);
+                    card.innerHTML = `
+            <div class="row">
+              <div><strong>${
+                  v.name || v.username
+              }</strong> <span class="muted">${
+                        v.username ? "@" + v.username : ""
+                    }</span></div>
+              <div>${verified ? "✅ Verified" : "⏳ Pending"}</div>
+            </div>
+            <div class="muted">${prof.bio || ""}</div>
+            <div class="muted">${prof.location || ""}</div>
+            <div>
+              ${skills.map((s) => `<span class="pill">${s}</span>`).join(" ")}
+              ${roles
+                  .map(
+                      (s) =>
+                          `<span class="pill" style="background:#efe">${s}</span>`
+                  )
+                  .join(" ")}
+            </div>
+            <div class="actions">
+              <button class="btn" onclick="openMessage('${
+                  v.username || ""
+              }')">Message</button>
+              <button class="btn primary" ${
+                  verified ? "" : "disabled"
+              } onclick="referVolunteer('${v.username || ""}')">Refer</button>
+            </div>
+          `;
+                    grid.appendChild(card);
+                });
+            }
+
+            function openMessage(username) {
+                if (!token) return (window.location.href = "/auth.html");
+                const url = new URL("/messages.html", window.location.origin);
+                if (username) url.searchParams.set("to", username);
+                window.location.href = url.toString();
+            }
+
+            function referVolunteer(username) {
+                alert("Referral link copied for @" + username);
+            }
+
+            async function requestVolunteer() {
+                const body = {
+                    profile: {
+                        bio: document.getElementById("bio").value.trim(),
+                        location: document
+                            .getElementById("v_location")
+                            .value.trim(),
+                        phone: document.getElementById("phone").value.trim(),
+                        skills: selectedFrom("skillsChips"),
+                        roles: selectedFrom("rolesChips"),
+                        availability: selectedFrom("availabilityChips"),
+                        hoursPerWeek:
+                            Number(
+                                document.getElementById("hoursPerWeek").value ||
+                                    0
+                            ) || undefined,
+                        experienceYears:
+                            Number(
+                                document.getElementById("experienceYears")
+                                    .value || 0
+                            ) || undefined,
+                    },
+                };
+                const res = await fetch("/api/volunteers/request", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify(body),
+                });
+                if (!res.ok) {
+                    alert("Failed to submit application");
+                    return;
+                }
+                alert("Application submitted. We will review shortly.");
+                applyFilters();
+            }
+
+            function applyFilters() {
+                const params = {};
+                const q = document.getElementById("q").value.trim();
+                const location = document
+                    .getElementById("location")
+                    .value.trim();
+                const verified = document.getElementById("verified").value;
+                const skill = document.getElementById("skillSelect").value;
+                if (q) params.q = q;
+                if (location) params.location = location;
+                if (verified !== "") params.verified = verified;
+                if (skill) params.skills = JSON.stringify([skill]);
+                loadVolunteers(params);
+            }
+
+            function clearFilters() {
+                document.getElementById("q").value = "";
+                document.getElementById("location").value = "";
+                document.getElementById("verified").value = "";
+                document.getElementById("skillSelect").value = "";
                 loadVolunteers();
             }
+
+            async function maybeLoadAdminQueue() {
+                try {
+                    if (!token) return;
+                    const meRes = await fetch("/api/users/me", {
+                        headers: { Authorization: `Bearer ${token}` },
+                    });
+                    if (!meRes.ok) return;
+                    const me = await meRes.json();
+                    if (!me.user || me.user.role !== "admin") return;
+                    const holder = document.getElementById("adminQueue");
+                    holder.style.display = "";
+                    const res = await fetch("/api/volunteers/queue", {
+                        headers: { Authorization: `Bearer ${token}` },
+                    });
+                    const data = await res.json();
+                    const list = document.getElementById("queueList");
+                    list.innerHTML = "";
+                    (data.pending || []).forEach((p) => {
+                        const prof = p.volunteerProfile || {};
+                        const row = document.createElement("div");
+                        row.className = "card";
+                        row.innerHTML = `
+              <div class="row"><strong>${
+                  p.name
+              }</strong> <span class="muted">@${p.username}</span></div>
+              <div class="muted">${prof.bio || ""}</div>
+              <div>${(prof.skills || [])
+                  .map((s) => `<span class='pill'>${s}</span>`)
+                  .join(" ")}</div>
+              <div class="row">
+                <div class="actions">
+                  <button class="btn" onclick="review('${
+                      p._id || p.id
+                  }','reject')">Reject</button>
+                  <button class="btn primary" onclick="review('${
+                      p._id || p.id
+                  }','approve')">Approve</button>
+                </div>
+              </div>
+            `;
+                        list.appendChild(row);
+                    });
+                } catch (_e) {
+                    /* ignore */
+                }
+            }
+
+            async function review(userId, action) {
+                if (!token) return;
+                const reason =
+                    action === "reject"
+                        ? prompt("Reason for rejection (optional)")
+                        : "";
+                const res = await fetch("/api/volunteers/verify", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({
+                        userId,
+                        verified: action === "approve",
+                        reason,
+                    }),
+                });
+                if (!res.ok) {
+                    alert("Failed to update");
+                    return;
+                }
+                maybeLoadAdminQueue();
+                applyFilters();
+            }
+
+            document.getElementById("requestBtn").onclick = () => {
+                if (!token) return (window.location.href = "/auth.html");
+                document
+                    .querySelector(".form")
+                    .scrollIntoView({ behavior: "smooth" });
+            };
+            document.getElementById("submitApplication").onclick = () => {
+                if (!token) return (window.location.href = "/auth.html");
+                requestVolunteer();
+            };
+
+            // Initialize
+            buildChips("skillsChips", skillOptions);
+            buildChips("rolesChips", roleOptions);
+            buildChips("availabilityChips", availabilityOptions);
+            gateRequest();
             loadVolunteers();
+            maybeLoadAdminQueue();
         </script>
         <script src="script.js"></script>
     </body>

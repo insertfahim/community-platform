@@ -9,6 +9,24 @@ const userSchema = new mongoose.Schema(
         password: { type: String, required: true },
         isVolunteer: { type: Boolean, default: false },
         isVolunteerVerified: { type: Boolean, default: false },
+        // Extended volunteer metadata for a realistic setup
+        volunteerProfile: {
+            bio: { type: String },
+            skills: { type: [String], default: [] },
+            availability: { type: [String], default: [] }, // e.g. ["weekdays", "weekends", "mornings"]
+            location: { type: String },
+            languages: { type: [String], default: [] },
+            phone: { type: String },
+            hoursPerWeek: { type: Number },
+            experienceYears: { type: Number },
+            roles: { type: [String], default: [] }, // e.g. ["driver", "tutor"]
+            certifications: { type: [String], default: [] },
+        },
+        volunteerRequestedAt: { type: Date },
+        volunteerVerifiedAt: { type: Date },
+        volunteerRejectedAt: { type: Date },
+        volunteerRejectionReason: { type: String },
+        volunteerAdminNotes: { type: String },
         role: { type: String, enum: ["user", "admin"], default: "user" },
     },
     { timestamps: { createdAt: "created_at", updatedAt: "updated_at" } }
@@ -108,24 +126,115 @@ const findUserById = async (id) => {
 const requestVolunteer = async (userId) => {
     const doc = await UserModel.findByIdAndUpdate(
         userId,
-        { $set: { isVolunteer: true, isVolunteerVerified: false } },
+        {
+            $set: {
+                isVolunteer: true,
+                isVolunteerVerified: false,
+                volunteerRequestedAt: new Date(),
+                volunteerRejectedAt: null,
+                volunteerRejectionReason: null,
+            },
+        },
         { new: true }
     ).lean();
     return doc ? doc._id.toString() : undefined;
 };
 
-const verifyVolunteer = async (userId, verified) => {
-    const doc = await UserModel.findByIdAndUpdate(
-        userId,
-        { $set: { isVolunteer: true, isVolunteerVerified: !!verified } },
-        { new: true }
-    ).lean();
+const verifyVolunteer = async (userId, verified, opts = {}) => {
+    const update = {
+        $set: {
+            isVolunteer: true,
+            isVolunteerVerified: !!verified,
+            volunteerAdminNotes: opts.adminNotes || undefined,
+            volunteerVerifiedAt: verified ? new Date() : undefined,
+            volunteerRejectedAt: !verified ? new Date() : undefined,
+            volunteerRejectionReason: !verified ? opts.reason || "" : undefined,
+        },
+    };
+    const doc = await UserModel.findByIdAndUpdate(userId, update, {
+        new: true,
+    }).lean();
     return doc ? doc._id.toString() : undefined;
 };
 
-const listVolunteers = async () => {
-    return UserModel.find({ isVolunteer: true })
-        .select("name username isVolunteerVerified created_at")
+const listVolunteers = async (filters = {}) => {
+    const query = { isVolunteer: true };
+    if (typeof filters.verified === "boolean") {
+        query.isVolunteerVerified = filters.verified;
+    }
+    if (filters.location) {
+        query["volunteerProfile.location"] = {
+            $regex: new RegExp(filters.location, "i"),
+        };
+    }
+    if (
+        filters.skills &&
+        Array.isArray(filters.skills) &&
+        filters.skills.length
+    ) {
+        query["volunteerProfile.skills"] = { $in: filters.skills };
+    }
+    if (filters.q) {
+        const rx = new RegExp(filters.q, "i");
+        query.$or = [
+            { name: rx },
+            { username: rx },
+            { "volunteerProfile.bio": rx },
+            { "volunteerProfile.skills": rx },
+            { "volunteerProfile.roles": rx },
+        ];
+    }
+    return UserModel.find(query)
+        .select("name username isVolunteerVerified created_at volunteerProfile")
+        .sort({
+            isVolunteerVerified: -1,
+            "volunteerProfile.skills": 1,
+            created_at: -1,
+        })
+        .lean();
+};
+
+const upsertVolunteerProfile = async (userId, profile) => {
+    const allowed = [
+        "bio",
+        "skills",
+        "availability",
+        "location",
+        "languages",
+        "phone",
+        "hoursPerWeek",
+        "experienceYears",
+        "roles",
+        "certifications",
+    ];
+    const setProfile = {};
+    for (const key of allowed) {
+        if (Object.prototype.hasOwnProperty.call(profile || {}, key)) {
+            setProfile[`volunteerProfile.${key}`] = profile[key];
+        }
+    }
+    const update = {
+        $set: {
+            ...setProfile,
+            isVolunteer: true,
+            isVolunteerVerified: false,
+            volunteerRequestedAt: new Date(),
+            volunteerRejectedAt: null,
+            volunteerRejectionReason: null,
+        },
+    };
+    const doc = await UserModel.findByIdAndUpdate(userId, update, {
+        new: true,
+    }).lean();
+    return doc ? doc._id.toString() : undefined;
+};
+
+const listVolunteerRequests = async () => {
+    return UserModel.find({ isVolunteer: true, isVolunteerVerified: false })
+        .select(
+            "name email username volunteerRequestedAt volunteerProfile volunteerRejectionReason volunteerAdminNotes"
+        )
+        .sort({ volunteerRequestedAt: -1 })
         .lean();
 };
 

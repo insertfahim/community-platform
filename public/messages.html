@@ -103,7 +103,7 @@
                 window.location.replace("/auth.html");
             }
 
-            async function loadConversations() {
+            async function loadConversations(prefillUsername) {
                 const res = await fetch("/api/messages/conversations", {
                     headers: { Authorization: `Bearer ${token}` },
                 });
@@ -122,6 +122,11 @@
                     };
                     list.appendChild(div);
                 });
+                if (prefillUsername) {
+                    document.getElementById("recipientUsername").value =
+                        prefillUsername;
+                    startConversationByUsername();
+                }
             }
 
             async function startConversationByUsername() {
@@ -206,7 +211,11 @@
                 loadMessages();
             }
 
-            loadConversations();
+            (function initPrefill() {
+                const params = new URLSearchParams(window.location.search);
+                const to = params.get("to");
+                loadConversations(to || undefined);
+            })();
         </script>
         <script src="script.js"></script>
     </body>
