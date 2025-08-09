@@ -1,3 +1,4 @@
+require("dotenv").config();
 const connectToDatabase = require("../config/db");
 const { UserModel, hashPassword } = require("../models/User");
 const { PostModel } = require("../models/Post");

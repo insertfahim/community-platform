@@ -1,3 +1,4 @@
+require("dotenv").config();
 // Vercel serverless function entry for the Express app
 const mongoose = require("mongoose");
 const app = require("../app");
