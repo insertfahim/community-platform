@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // routes
 const emergencyRoutes = require("./routes/emergencyRoutes");
@@ -22,8 +22,15 @@ const app = express();
 const REQUEST_LOGS_ENABLED =
     String(process.env.REQUEST_LOGS_ENABLED || "true").toLowerCase() === "true";
 
+const allowedOrigins = String(
+    process.env.CORS_ORIGINS || "http://localhost:3000,http://127.0.0.1:3000"
+)
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
 const corsOptions = {
-    origin: ["http://localhost:3000", "http://127.0.0.1:3000"],
+    origin: allowedOrigins,
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
