@@ -13,7 +13,9 @@ async function connectToDatabase() {
         console.log("✅ MongoDB connection established");
     } catch (err) {
         console.error("❌ MongoDB connection failed:", err.message);
-        process.exit(1);
+        // In serverless environments, do not exit the process
+        // Let the caller handle the error and possibly retry on next invocation
+        throw err;
     }
 }
 

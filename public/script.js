@@ -89,7 +89,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         e.preventDefault();
                         localStorage.removeItem("auth_token");
                         localStorage.removeItem("user_id");
-                        window.location.href = "/auth";
+                        window.location.href = "/auth.html";
                     };
                 }
 
