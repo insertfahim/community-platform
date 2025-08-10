@@ -41,9 +41,10 @@ document.addEventListener("DOMContentLoaded", function () {
         <ul class="footer-links">
           <li><a href="/feed.html">Feed</a></li>
           <li data-requires-auth><a href="/post.html">Post</a></li>
-          <li data-requires-auth><a href="/messages.html">Messages</a></li>
           <li><a href="/donations.html">Donations</a></li>
+          <li><a href="/volunteers.html">Volunteers</a></li>
           <li><a href="/emergency.html">Emergency</a></li>
+          <li data-requires-auth><a href="/calendar.html">Calendar</a></li>
         </ul>
         <div class="footer-copy">© ${year} Community Support</div>
       </div>
