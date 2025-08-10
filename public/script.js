@@ -20,13 +20,10 @@ document.addEventListener("DOMContentLoaded", function () {
         <ul id="site-nav-links" class="site-nav-links">
           <li><a href="/feed.html">Feed</a></li>
           <li data-requires-auth><a href="/post.html">Post Help</a></li>
-          <li data-requires-auth><a href="/messages.html">Messages</a></li>
           <li><a href="/donations.html">Donations</a></li>
-          <li><a href="/learning.html">Learning</a></li>
-          <li data-requires-auth><a href="/calendar.html">Calendar</a></li>
-          <li><a href="/incidents.html">Alerts</a></li>
           <li><a href="/volunteers.html">Volunteers</a></li>
-          <li data-requires-auth><a href="/history.html">My Logs</a></li>
+          <li><a href="/emergency.html">Emergency</a></li>
+          <li data-requires-auth><a href="/calendar.html">Calendar</a></li>
           <li data-auth-link><a href="/auth.html">Sign Up / Login</a></li>
           <li data-logout-link style="display:none"><a href="#" id="site-logout">Logout</a></li>
         </ul>
@@ -118,23 +115,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         .forEach((el) => {
                             el.style.display = "";
                         });
-                    if (data && data.user && data.user.role === "admin") {
-                        const hasAdmin = Array.from(
-                            nav.querySelectorAll("a")
-                        ).some((a) =>
-                            (a.getAttribute("href") || "")
-                                .trim()
-                                .endsWith("admin.html")
-                        );
-                        if (!hasAdmin) {
-                            const li = document.createElement("li");
-                            const a = document.createElement("a");
-                            a.href = "/admin.html";
-                            a.textContent = "Admin";
-                            li.appendChild(a);
-                            nav.insertBefore(li, logoutLi || null);
-                        }
-                    }
+                    // Admin UI disabled per scope
                 }
             } else {
                 if (authLi) authLi.style.display = "";
@@ -149,23 +130,22 @@ document.addEventListener("DOMContentLoaded", function () {
             }
             // Page-level guardrails
             const path = window.location.pathname;
-            const requiresAuthPages = new Set([
-                "/messages.html",
-                "/calendar.html",
-                "/history.html",
-                "/post.html",
-            ]);
+            const requiresAuthPages = new Set(["/calendar.html", "/post.html"]);
             if (!token && requiresAuthPages.has(path)) {
                 window.location.replace("/auth.html");
                 return;
             }
-            if (path === "/admin.html") {
-                const role =
-                    document.body.dataset.role || (token ? "user" : "guest");
-                if (role !== "admin") {
-                    window.location.replace("/");
-                    return;
-                }
+            // Redirect disabled pages to home
+            const disabledPages = new Set([
+                "/messages.html",
+                "/learning.html",
+                "/incidents.html",
+                "/history.html",
+                "/admin.html",
+            ]);
+            if (disabledPages.has(path)) {
+                window.location.replace("/");
+                return;
             }
         } catch (_err) {
             // ignore
