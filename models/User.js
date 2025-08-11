@@ -86,7 +86,8 @@ async function generateUniqueUsername(base) {
     for (let i = 0; i < 100; i += 1) {
         const probe = n === 0 ? candidate : `${candidate}${n}`;
         // eslint-disable-next-line no-await-in-loop
-        const rows = await sql`select 1 from users where username = ${probe} limit 1`;
+        const rows =
+            await sql`select 1 from users where username = ${probe} limit 1`;
         if (!rows.length) return probe;
         n += 1;
     }
@@ -171,9 +172,15 @@ const listVolunteers = async (filters = {}) => {
     }
     if (filters.location) {
         params.push(`%${String(filters.location)}%`);
-        conditions.push(`coalesce(volunteer_profile->>'location','') ilike $${params.length}`);
+        conditions.push(
+            `coalesce(volunteer_profile->>'location','') ilike $${params.length}`
+        );
     }
-    if (filters.skills && Array.isArray(filters.skills) && filters.skills.length) {
+    if (
+        filters.skills &&
+        Array.isArray(filters.skills) &&
+        filters.skills.length
+    ) {
         params.push(filters.skills);
         conditions.push(`exists (
             select 1 from jsonb_array_elements_text(coalesce(volunteer_profile->'skills','[]'::jsonb)) s
@@ -194,7 +201,9 @@ const listVolunteers = async (filters = {}) => {
             )
         )`);
     }
-    const whereClause = conditions.length ? `where ${conditions.join(" and ")}` : "";
+    const whereClause = conditions.length
+        ? `where ${conditions.join(" and ")}`
+        : "";
     const query = `
         select id, name, username, is_volunteer_verified, created_at, volunteer_profile
         from users
@@ -279,11 +288,14 @@ module.exports = {
     requestVolunteer,
     verifyVolunteer,
     listVolunteers,
+    upsertVolunteerProfile,
+    listVolunteerRequests,
     generateUniqueUsername,
     // finder by username (kept for potential cross-feature references)
     findUserByUsername: async (username) => {
         const sql = getSql();
-        const rows = await sql`select * from users where username = ${username} limit 1`;
+        const rows =
+            await sql`select * from users where username = ${username} limit 1`;
         return mapUserRow(rows[0]);
     },
 };

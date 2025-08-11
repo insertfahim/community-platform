@@ -4,7 +4,9 @@ const createDonation = async (data) => {
     const sql = getSql();
     const rows = await sql`
         insert into donations (kind, description, location, contact, status, owner_id)
-        values (${data.kind}, ${data.description}, ${data.location}, ${data.contact}, ${data.status || 'available'}, ${data.ownerId})
+        values (${data.kind}, ${data.description}, ${data.location}, ${
+        data.contact
+    }, ${data.status || "available"}, ${data.ownerId})
         returning id
     `;
     return String(rows[0].id);
@@ -12,17 +14,31 @@ const createDonation = async (data) => {
 
 const listDonations = async (filters = {}) => {
     const sql = getSql();
-    const where = [];
-    if (filters.kind) where.push(sql`d.kind = ${filters.kind}`);
-    if (filters.status) where.push(sql`d.status = ${filters.status}`);
-    if (filters.ownerId) where.push(sql`d.owner_id = ${filters.ownerId}`);
-    const rows = await sql`
+    const conditions = [];
+    const params = [];
+    if (filters.kind) {
+        params.push(filters.kind);
+        conditions.push(`d.kind = $${params.length}`);
+    }
+    if (filters.status) {
+        params.push(filters.status);
+        conditions.push(`d.status = $${params.length}`);
+    }
+    if (filters.ownerId) {
+        params.push(filters.ownerId);
+        conditions.push(`d.owner_id = $${params.length}`);
+    }
+    const whereClause = conditions.length
+        ? `where ${conditions.join(" and ")}`
+        : "";
+    const query = `
         select d.*, u.username as owner_username, u.name as owner_name
         from donations d
         left join users u on u.id = d.owner_id
-        ${where.length ? sql`where ${sql.join(where, sql` and `)}` : sql``}
+        ${whereClause}
         order by d.created_at desc
     `;
+    const rows = await sql(query, params);
     return rows.map((r) => ({
         id: String(r.id),
         kind: r.kind,
@@ -66,7 +82,8 @@ const updateDonation = async (id, ownerId, updates) => {
 
 const deleteDonation = async (id, ownerId) => {
     const sql = getSql();
-    const rows = await sql`delete from donations where id = ${id} and owner_id = ${ownerId} returning id`;
+    const rows =
+        await sql`delete from donations where id = ${id} and owner_id = ${ownerId} returning id`;
     return rows.length > 0;
 };
 
