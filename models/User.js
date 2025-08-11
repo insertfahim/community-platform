@@ -1,38 +1,5 @@
-const mongoose = require("mongoose");
 const crypto = require("crypto");
-
-const userSchema = new mongoose.Schema(
-    {
-        name: { type: String, required: true },
-        username: { type: String, unique: true, sparse: true },
-        email: { type: String, required: true, unique: true },
-        password: { type: String, required: true },
-        isVolunteer: { type: Boolean, default: false },
-        isVolunteerVerified: { type: Boolean, default: false },
-        // Extended volunteer metadata for a realistic setup
-        volunteerProfile: {
-            bio: { type: String },
-            skills: { type: [String], default: [] },
-            availability: { type: [String], default: [] }, // e.g. ["weekdays", "weekends", "mornings"]
-            location: { type: String },
-            languages: { type: [String], default: [] },
-            phone: { type: String },
-            hoursPerWeek: { type: Number },
-            experienceYears: { type: Number },
-            roles: { type: [String], default: [] }, // e.g. ["driver", "tutor"]
-            certifications: { type: [String], default: [] },
-        },
-        volunteerRequestedAt: { type: Date },
-        volunteerVerifiedAt: { type: Date },
-        volunteerRejectedAt: { type: Date },
-        volunteerRejectionReason: { type: String },
-        volunteerAdminNotes: { type: String },
-        role: { type: String, enum: ["user", "admin"], default: "user" },
-    },
-    { timestamps: { createdAt: "created_at", updatedAt: "updated_at" } }
-);
-
-const UserModel = mongoose.models.User || mongoose.model("User", userSchema);
+const { getSql } = require("../config/db");
 
 const base64UrlEncode = (inputBuffer) =>
     inputBuffer
@@ -77,10 +44,32 @@ const verifyPassword = (password, stored) => {
     return crypto.timingSafeEqual(a, b);
 };
 
+function mapUserRow(row) {
+    if (!row) return undefined;
+    return {
+        id: String(row.id),
+        name: row.name,
+        username: row.username,
+        email: row.email,
+        password: row.password,
+        role: row.role,
+        isVolunteer: row.is_volunteer,
+        isVolunteerVerified: row.is_volunteer_verified,
+        volunteerProfile: row.volunteer_profile || null,
+        volunteerRequestedAt: row.volunteer_requested_at || null,
+        volunteerVerifiedAt: row.volunteer_verified_at || null,
+        volunteerRejectedAt: row.volunteer_rejected_at || null,
+        volunteerRejectionReason: row.volunteer_rejection_reason || null,
+        volunteerAdminNotes: row.volunteer_admin_notes || null,
+        created_at: row.created_at,
+        updated_at: row.updated_at,
+    };
+}
+
 const findUserByEmail = async (email) => {
-    const user = await UserModel.findOne({ email }).lean();
-    if (!user) return undefined;
-    return { ...user, id: user._id.toString() };
+    const sql = getSql();
+    const rows = await sql`select * from users where email = ${email} limit 1`;
+    return mapUserRow(rows[0]);
 };
 
 async function generateUniqueUsername(base) {
@@ -93,11 +82,12 @@ async function generateUniqueUsername(base) {
     let n = 0;
     // Try with suffixes until unique
     // Limit attempts to avoid infinite loop
+    const sql = getSql();
     for (let i = 0; i < 100; i += 1) {
         const probe = n === 0 ? candidate : `${candidate}${n}`;
         // eslint-disable-next-line no-await-in-loop
-        const exists = await UserModel.exists({ username: probe });
-        if (!exists) return probe;
+        const rows = await sql`select 1 from users where username = ${probe} limit 1`;
+        if (!rows.length) return probe;
         n += 1;
     }
     // Fallback with random suffix
@@ -105,96 +95,125 @@ async function generateUniqueUsername(base) {
 }
 
 const createUser = async ({ name, email, password }) => {
+    const sql = getSql();
     const hashed = hashPassword(password);
     const baseFromEmail = (email || "").split("@")[0] || name || "user";
     const username = await generateUniqueUsername(baseFromEmail);
-    const doc = await UserModel.create({
-        name,
-        email,
-        username,
-        password: hashed,
-    });
-    return doc._id.toString();
+    const rows = await sql`
+        insert into users (name, email, username, password)
+        values (${name}, ${email}, ${username}, ${hashed})
+        returning id
+    `;
+    return String(rows[0].id);
 };
 
 const findUserById = async (id) => {
-    const user = await UserModel.findById(id).lean();
-    if (!user) return undefined;
-    return { ...user, id: user._id.toString() };
+    const sql = getSql();
+    const rows = await sql`select * from users where id = ${id} limit 1`;
+    return mapUserRow(rows[0]);
 };
 
 const requestVolunteer = async (userId) => {
-    const doc = await UserModel.findByIdAndUpdate(
-        userId,
-        {
-            $set: {
-                isVolunteer: true,
-                isVolunteerVerified: false,
-                volunteerRequestedAt: new Date(),
-                volunteerRejectedAt: null,
-                volunteerRejectionReason: null,
-            },
-        },
-        { new: true }
-    ).lean();
-    return doc ? doc._id.toString() : undefined;
+    const sql = getSql();
+    const rows = await sql`
+        update users
+        set is_volunteer = true,
+            is_volunteer_verified = false,
+            volunteer_requested_at = now(),
+            volunteer_rejected_at = null,
+            volunteer_rejection_reason = null,
+            updated_at = now()
+        where id = ${userId}
+        returning id
+    `;
+    return rows.length ? String(rows[0].id) : undefined;
 };
 
 const verifyVolunteer = async (userId, verified, opts = {}) => {
-    const update = {
-        $set: {
-            isVolunteer: true,
-            isVolunteerVerified: !!verified,
-            volunteerAdminNotes: opts.adminNotes || undefined,
-            volunteerVerifiedAt: verified ? new Date() : undefined,
-            volunteerRejectedAt: !verified ? new Date() : undefined,
-            volunteerRejectionReason: !verified ? opts.reason || "" : undefined,
-        },
-    };
-    const doc = await UserModel.findByIdAndUpdate(userId, update, {
-        new: true,
-    }).lean();
-    return doc ? doc._id.toString() : undefined;
+    const sql = getSql();
+    if (verified) {
+        const rows = await sql`
+            update users
+            set is_volunteer = true,
+                is_volunteer_verified = true,
+                volunteer_admin_notes = ${opts.adminNotes || null},
+                volunteer_verified_at = now(),
+                volunteer_rejected_at = null,
+                volunteer_rejection_reason = null,
+                updated_at = now()
+            where id = ${userId}
+            returning id
+        `;
+        return rows.length ? String(rows[0].id) : undefined;
+    }
+    const rows = await sql`
+        update users
+        set is_volunteer = true,
+            is_volunteer_verified = false,
+            volunteer_admin_notes = ${opts.adminNotes || null},
+            volunteer_verified_at = null,
+            volunteer_rejected_at = now(),
+            volunteer_rejection_reason = ${opts.reason || ""},
+            updated_at = now()
+        where id = ${userId}
+        returning id
+    `;
+    return rows.length ? String(rows[0].id) : undefined;
 };
 
 const listVolunteers = async (filters = {}) => {
-    const query = { isVolunteer: true };
+    const sql = getSql();
+    const conditions = ["is_volunteer = true"];
+    const params = [];
     if (typeof filters.verified === "boolean") {
-        query.isVolunteerVerified = filters.verified;
+        params.push(filters.verified);
+        conditions.push(`is_volunteer_verified = $${params.length}`);
     }
     if (filters.location) {
-        query["volunteerProfile.location"] = {
-            $regex: new RegExp(filters.location, "i"),
-        };
+        params.push(`%${String(filters.location)}%`);
+        conditions.push(`coalesce(volunteer_profile->>'location','') ilike $${params.length}`);
     }
-    if (
-        filters.skills &&
-        Array.isArray(filters.skills) &&
-        filters.skills.length
-    ) {
-        query["volunteerProfile.skills"] = { $in: filters.skills };
+    if (filters.skills && Array.isArray(filters.skills) && filters.skills.length) {
+        params.push(filters.skills);
+        conditions.push(`exists (
+            select 1 from jsonb_array_elements_text(coalesce(volunteer_profile->'skills','[]'::jsonb)) s
+            where s = any($${params.length})
+        )`);
     }
     if (filters.q) {
-        const rx = new RegExp(filters.q, "i");
-        query.$or = [
-            { name: rx },
-            { username: rx },
-            { "volunteerProfile.bio": rx },
-            { "volunteerProfile.skills": rx },
-            { "volunteerProfile.roles": rx },
-        ];
+        params.push(`%${String(filters.q)}%`);
+        const qIndex = params.length;
+        conditions.push(`(
+            name ilike $${qIndex} or username ilike $${qIndex} or
+            coalesce(volunteer_profile->>'bio','') ilike $${qIndex} or
+            exists (
+               select 1 from jsonb_array_elements_text(coalesce(volunteer_profile->'skills','[]'::jsonb)) s where s ilike $${qIndex}
+            ) or
+            exists (
+               select 1 from jsonb_array_elements_text(coalesce(volunteer_profile->'roles','[]'::jsonb)) r where r ilike $${qIndex}
+            )
+        )`);
     }
-    return UserModel.find(query)
-        .select("name username isVolunteerVerified created_at volunteerProfile")
-        .sort({
-            isVolunteerVerified: -1,
-            "volunteerProfile.skills": 1,
-            created_at: -1,
-        })
-        .lean();
+    const whereClause = conditions.length ? `where ${conditions.join(" and ")}` : "";
+    const query = `
+        select id, name, username, is_volunteer_verified, created_at, volunteer_profile
+        from users
+        ${whereClause}
+        order by is_volunteer_verified desc, created_at desc
+    `;
+    const rows = await sql(query, params);
+    return rows.map((r) => ({
+        id: String(r.id),
+        name: r.name,
+        username: r.username,
+        isVolunteerVerified: r.is_volunteer_verified,
+        created_at: r.created_at,
+        volunteerProfile: r.volunteer_profile || {},
+    }));
 };
 
 const upsertVolunteerProfile = async (userId, profile) => {
+    const sql = getSql();
     const allowed = [
         "bio",
         "skills",
@@ -207,52 +226,64 @@ const upsertVolunteerProfile = async (userId, profile) => {
         "roles",
         "certifications",
     ];
-    const setProfile = {};
+    const safe = {};
     for (const key of allowed) {
         if (Object.prototype.hasOwnProperty.call(profile || {}, key)) {
-            setProfile[`volunteerProfile.${key}`] = profile[key];
+            safe[key] = profile[key];
         }
     }
-    const update = {
-        $set: {
-            ...setProfile,
-            isVolunteer: true,
-            isVolunteerVerified: false,
-            volunteerRequestedAt: new Date(),
-            volunteerRejectedAt: null,
-            volunteerRejectionReason: null,
-        },
-    };
-    const doc = await UserModel.findByIdAndUpdate(userId, update, {
-        new: true,
-    }).lean();
-    return doc ? doc._id.toString() : undefined;
+    const json = JSON.stringify(safe);
+    const query = `
+        update users
+        set volunteer_profile = coalesce(volunteer_profile, '{}'::jsonb) || $1::jsonb,
+            is_volunteer = true,
+            is_volunteer_verified = false,
+            volunteer_requested_at = $2,
+            volunteer_rejected_at = null,
+            volunteer_rejection_reason = null,
+            updated_at = now()
+        where id = $3
+        returning id
+    `;
+    const rows = await sql(query, [json, new Date(), userId]);
+    return rows.length ? String(rows[0].id) : undefined;
 };
 
 const listVolunteerRequests = async () => {
-    return UserModel.find({ isVolunteer: true, isVolunteerVerified: false })
-        .select(
-            "name email username volunteerRequestedAt volunteerProfile volunteerRejectionReason volunteerAdminNotes"
-        )
-        .sort({ volunteerRequestedAt: -1 })
-        .lean();
+    const sql = getSql();
+    const rows = await sql`
+        select id, name, email, username, volunteer_requested_at, volunteer_profile,
+               volunteer_rejection_reason, volunteer_admin_notes
+        from users
+        where is_volunteer = true and is_volunteer_verified = false
+        order by volunteer_requested_at desc nulls last
+    `;
+    return rows.map((r) => ({
+        id: String(r.id),
+        name: r.name,
+        email: r.email,
+        username: r.username,
+        volunteerRequestedAt: r.volunteer_requested_at,
+        volunteerProfile: r.volunteer_profile || {},
+        volunteerRejectionReason: r.volunteer_rejection_reason || null,
+        volunteerAdminNotes: r.volunteer_admin_notes || null,
+    }));
 };
 
 module.exports = {
     findUserByEmail,
     createUser,
     findUserById,
-    UserModel,
     hashPassword,
     verifyPassword,
     requestVolunteer,
     verifyVolunteer,
     listVolunteers,
     generateUniqueUsername,
-    // finder by username for messaging
+    // finder by username (kept for potential cross-feature references)
     findUserByUsername: async (username) => {
-        const user = await UserModel.findOne({ username }).lean();
-        if (!user) return undefined;
-        return { ...user, id: user._id.toString() };
+        const sql = getSql();
+        const rows = await sql`select * from users where username = ${username} limit 1`;
+        return mapUserRow(rows[0]);
     },
 };

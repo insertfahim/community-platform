@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 const { attachUser } = require("./middleware/auth");
+const { connectToDatabase } = require("./config/db");
 
 // routes
 const emergencyRoutes = require("./routes/emergencyRoutes");
@@ -36,6 +37,10 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use(express.json());
+// Ensure DB initialized for any cold starts in long-lived server
+connectToDatabase().catch((e) => {
+    console.error("DB init error:", e);
+});
 app.use(attachUser);
 
 app.use((req, _res, next) => {

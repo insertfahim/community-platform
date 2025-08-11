@@ -1,19 +1,18 @@
-// Vercel serverless function entry for the Express app
-const mongoose = require("mongoose");
+// Vercel serverless function entry for the Express app (Neon/Postgres)
 const app = require("../app");
-const connectToDatabase = require("../config/db");
+const { connectToDatabase } = require("../config/db");
 
-let isConnected = false;
+let isInitialized = false;
 
-async function ensureDbConnected() {
-    if (isConnected && mongoose.connection.readyState === 1) return;
+async function ensureDbInitialized() {
+    if (isInitialized) return;
     await connectToDatabase();
-    isConnected = true;
+    isInitialized = true;
 }
 
 module.exports = async (req, res) => {
     try {
-        await ensureDbConnected();
+        await ensureDbInitialized();
         return app(req, res);
     } catch (err) {
         console.error("❌ Handler error:", err);

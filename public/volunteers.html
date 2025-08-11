@@ -422,9 +422,6 @@
                   .join(" ")}
             </div>
             <div class="actions">
-              <button class="btn" onclick="openMessage('${
-                  v.username || ""
-              }')">Message</button>
               <button class="btn primary" ${
                   verified ? "" : "disabled"
               } onclick="referVolunteer('${v.username || ""}')">Refer</button>
@@ -434,11 +431,9 @@
                 });
             }
 
+            // Messaging disabled
             function openMessage(username) {
-                if (!token) return (window.location.href = "/auth.html");
-                const url = new URL("/messages.html", window.location.origin);
-                if (username) url.searchParams.set("to", username);
-                window.location.href = url.toString();
+                return;
             }
 
             function referVolunteer(username) {
