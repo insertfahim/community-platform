@@ -16,6 +16,19 @@ body {
     background: #f8fafc;
 }
 
+/* Additional top margin for non-home pages after footer removal */
+body:not(.home-page) .container,
+body:not(.home-page) .feed-container,
+body:not(.home-page) .emergency-container,
+body:not(.home-page) .learning-page {
+    margin-top: 4rem !important;
+}
+
+/* Special handling for pages with custom body styles */
+body:not(.home-page) {
+    padding-bottom: 3rem;
+}
+
 /* New global header */
 .site-header {
     position: fixed;

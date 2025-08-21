@@ -8,13 +8,13 @@
 
 body {
     font-family: "Open Sans", Helvetica, Arial, sans-serif;
-    height: 100vh;
+    min-height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
     background: linear-gradient(135deg, #f3f4f6 0%, #eef2ff 45%, #e0e7ff 100%);
     margin: 0;
-    padding: 0;
+    padding: 80px 20px 40px 20px; /* Added padding to account for header and provide bottom space */
 }
 
 input,
