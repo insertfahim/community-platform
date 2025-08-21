@@ -10,28 +10,41 @@ document.addEventListener("DOMContentLoaded", function () {
     const legacyNavbar = document.querySelector(".navbar");
     if (legacyNavbar) legacyNavbar.remove();
 
-    // Build header
-    const header = document.createElement("header");
-    header.className = "site-header";
-    header.innerHTML = `
-      <div class="site-container">
-        <a href="/" class="site-brand">Community Support</a>
-        <button id="site-menu-btn" class="site-menu-btn" aria-label="Toggle navigation">☰</button>
-        <ul id="site-nav-links" class="site-nav-links">
-          <li><a href="/feed.html">Feed</a></li>
-          <li data-requires-auth><a href="/post.html">Post Help</a></li>
-          <li><a href="/donations.html">Donations</a></li>
-          <li><a href="/volunteers.html">Volunteers</a></li>
-          <li><a href="/emergency.html">Emergency</a></li>
-          <li data-requires-auth><a href="/calendar.html">Calendar</a></li>
-          <li data-auth-link><a href="/auth.html">Sign Up / Login</a></li>
-          <li data-logout-link style="display:none"><a href="#" id="site-logout">Logout</a></li>
-        </ul>
-      </div>
-    `;
-    document.body.insertBefore(header, document.body.firstChild);
+    // Check if header already exists (for pages like admin.html)
+    // or if there's existing navigation (for pages like feed.html, volunteers.html etc)
+    const existingHeader = document.querySelector(".site-header");
+    const existingNavigation = document.querySelector(
+        'a[href="/"], a[href="index.html"]'
+    );
 
-    // Toggle button
+    if (!existingHeader && !existingNavigation) {
+        // Build header
+        const header = document.createElement("header");
+        header.className = "site-header";
+        header.innerHTML = `
+          <div class="site-container">
+            <a href="/" class="site-brand">🏘️ Community</a>
+            <button id="site-menu-btn" class="site-menu-btn" aria-label="Toggle navigation">☰</button>
+            <ul id="site-nav-links" class="site-nav-links">
+              <li><a href="/">Home</a></li>
+              <li><a href="/feed.html">Feed</a></li>
+              <li data-requires-auth><a href="/post.html">Post Help</a></li>
+              <li><a href="/calendar.html">Calendar</a></li>
+              <li><a href="/donations.html">Donations</a></li>
+              <li><a href="/volunteers.html">Volunteers</a></li>
+              <li><a href="/emergency.html">Emergency</a></li>
+              <li data-requires-admin style="display:none">
+                <a href="/admin.html" style="background: rgba(255, 255, 255, 0.15); color: #fbbf24;">🛡️ Dashboard</a>
+              </li>
+              <li data-auth-link><a href="/auth.html">Sign Up / Login</a></li>
+              <li data-logout-link style="display:none"><a href="#" id="site-logout">Logout</a></li>
+            </ul>
+          </div>
+        `;
+        document.body.insertBefore(header, document.body.firstChild);
+    }
+
+    // Toggle button - works for both existing and dynamic headers
     const menuBtn = document.getElementById("site-menu-btn");
     const navLinks = document.getElementById("site-nav-links");
     if (menuBtn && navLinks) {
