@@ -6,42 +6,70 @@ function toggleMenu() {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
-    // Remove legacy floating navbar if present
+    // Remove all existing navigation elements to ensure consistency
     const legacyNavbar = document.querySelector(".navbar");
     if (legacyNavbar) legacyNavbar.remove();
 
-    // Check if header already exists (for pages like admin.html)
-    // or if there's existing navigation (for pages like feed.html, volunteers.html etc)
+    // Remove existing site-header if present
     const existingHeader = document.querySelector(".site-header");
-    const existingNavigation = document.querySelector(
-        'a[href="/"], a[href="index.html"]'
-    );
+    if (existingHeader) existingHeader.remove();
 
-    if (!existingHeader && !existingNavigation) {
-        // Build header
-        const header = document.createElement("header");
-        header.className = "site-header";
-        header.innerHTML = `
-          <div class="site-container">
-            <a href="/" class="site-brand">🏘️ Community</a>
-            <button id="site-menu-btn" class="site-menu-btn" aria-label="Toggle navigation">☰</button>
-            <ul id="site-nav-links" class="site-nav-links">
-              <li><a href="/">Home</a></li>
-              <li><a href="/feed.html">Feed</a></li>
-              <li data-requires-auth><a href="/post.html">Post Help</a></li>
-              <li><a href="/calendar.html">Calendar</a></li>
-              <li><a href="/donations.html">Donations</a></li>
-              <li><a href="/volunteers.html">Volunteers</a></li>
-              <li><a href="/emergency.html">Emergency</a></li>
-              <li data-requires-admin style="display:none">
-                <a href="/admin.html" style="background: rgba(255, 255, 255, 0.15); color: #fbbf24;">🛡️ Dashboard</a>
-              </li>
-              <li data-auth-link><a href="/auth.html">Sign Up / Login</a></li>
-              <li data-logout-link style="display:none"><a href="#" id="site-logout">Logout</a></li>
-            </ul>
-          </div>
-        `;
-        document.body.insertBefore(header, document.body.firstChild);
+    // Remove existing navigation by looking for common patterns
+    // Look for divs that contain the community branding or navigation links
+    const allDivs = document.querySelectorAll("div");
+    allDivs.forEach((div) => {
+        const hasHomeLink = div.querySelector(
+            'a[href="/"], a[href="index.html"]'
+        );
+        const hasCommunityText =
+            div.textContent && div.textContent.includes("🏘️ Community");
+        const hasNavStyle =
+            div.getAttribute("style") &&
+            div.getAttribute("style").includes("background: #f8f9fa");
+
+        if (
+            (hasHomeLink || hasCommunityText || hasNavStyle) &&
+            div !== document.body
+        ) {
+            // Additional check to make sure this looks like navigation
+            const hasMultipleLinks = div.querySelectorAll("a").length > 2;
+            if (hasMultipleLinks || hasNavStyle) {
+                div.remove();
+            }
+        }
+    });
+
+    // Always create a consistent header for all pages
+    const header = document.createElement("header");
+    header.className = "site-header";
+    header.innerHTML = `
+      <div class="site-container">
+        <a href="/" class="site-brand">🏘️ Community</a>
+        <button id="site-menu-btn" class="site-menu-btn" aria-label="Toggle navigation">☰</button>
+        <ul id="site-nav-links" class="site-nav-links">
+          <li><a href="/">Home</a></li>
+          <li><a href="/feed.html">Feed</a></li>
+          <li data-requires-auth><a href="/post.html">Post Help</a></li>
+          <li><a href="/calendar.html">Calendar</a></li>
+          <li><a href="/donations.html">Donations</a></li>
+          <li><a href="/volunteers.html">Volunteers</a></li>
+          <li><a href="/emergency.html">Emergency</a></li>
+          <li data-requires-admin style="display:none">
+            <a href="/admin.html" style="background: rgba(255, 255, 255, 0.15); color: #fbbf24; padding: 8px 16px; border-radius: 6px;">🛡️ Dashboard</a>
+          </li>
+          <li data-auth-link><a href="/auth.html">Sign Up / Login</a></li>
+          <li data-logout-link style="display:none"><a href="#" id="site-logout">Logout</a></li>
+        </ul>
+      </div>
+    `;
+    document.body.insertBefore(header, document.body.firstChild);
+
+    // Ensure body has proper padding for fixed header
+    if (
+        !document.body.style.paddingTop &&
+        !document.body.classList.contains("admin-dashboard")
+    ) {
+        document.body.style.paddingTop = "64px";
     }
 
     // Toggle button - works for both existing and dynamic headers

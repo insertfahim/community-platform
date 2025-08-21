@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Header Consistency Test</title>
+        <link rel="stylesheet" href="styles.css" />
+        <style>
+            body {
+                padding-top: 80px; /* Account for fixed header */
+            }
+            .test-container {
+                max-width: 800px;
+                margin: 0 auto;
+                padding: 20px;
+            }
+            .test-section {
+                background: #f8f9fa;
+                padding: 20px;
+                margin: 20px 0;
+                border-radius: 8px;
+                border-left: 4px solid #007bff;
+            }
+            .status {
+                padding: 8px 16px;
+                border-radius: 4px;
+                font-weight: bold;
+                margin: 10px 0;
+            }
+            .status.success {
+                background: #d4edda;
+                color: #155724;
+            }
+            .status.error {
+                background: #f8d7da;
+                color: #721c24;
+            }
+            .status.warning {
+                background: #fff3cd;
+                color: #856404;
+            }
+            .header-info {
+                background: #e7f3ff;
+                padding: 15px;
+                border-radius: 5px;
+                margin: 10px 0;
+            }
+            .nav-link {
+                display: inline-block;
+                padding: 8px 16px;
+                margin: 4px;
+                background: #007bff;
+                color: white;
+                text-decoration: none;
+                border-radius: 4px;
+            }
+            .nav-link:hover {
+                background: #0056b3;
+                color: white;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="test-container">
+            <h1>🧪 Header Consistency Test</h1>
+
+            <div class="test-section">
+                <h3>Current Authentication Status</h3>
+                <div id="authStatus">Checking...</div>
+                <div class="header-info">
+                    <strong>How to test:</strong><br />
+                    1. <strong>As Guest:</strong> Admin dashboard should NOT be
+                    visible<br />
+                    2. <strong>As Admin:</strong> Admin dashboard should be
+                    visible with golden styling<br />
+                    3. <strong>Header should be consistent:</strong> Same on all
+                    pages
+                </div>
+            </div>
+
+            <div class="test-section">
+                <h3>Header Analysis</h3>
+                <div id="headerAnalysis">Analyzing...</div>
+            </div>
+
+            <div class="test-section">
+                <h3>Admin Dashboard Link Test</h3>
+                <div id="adminLinkTest">Testing...</div>
+            </div>
+
+            <div class="test-section">
+                <h3>Quick Login (for testing)</h3>
+                <div
+                    style="background: #fff; padding: 15px; border-radius: 5px"
+                >
+                    <p>
+                        <strong>Admin Login:</strong> Email:
+                        <code>admin@example.com</code>, Password:
+                        <code>admin</code>
+                    </p>
+                    <button
+                        id="quickLogin"
+                        style="
+                            background: #28a745;
+                            color: white;
+                            border: none;
+                            padding: 8px 16px;
+                            border-radius: 4px;
+                            cursor: pointer;
+                        "
+                    >
+                        Quick Admin Login
+                    </button>
+                    <button
+                        id="logout"
+                        style="
+                            background: #dc3545;
+                            color: white;
+                            border: none;
+                            padding: 8px 16px;
+                            border-radius: 4px;
+                            cursor: pointer;
+                            margin-left: 10px;
+                        "
+                    >
+                        Logout
+                    </button>
+                </div>
+            </div>
+
+            <div class="test-section">
+                <h3>Test Navigation (Header should be same on all pages)</h3>
+                <a href="/" class="nav-link">Home</a>
+                <a href="/feed.html" class="nav-link">Feed</a>
+                <a href="/volunteers.html" class="nav-link">Volunteers</a>
+                <a href="/admin.html" class="nav-link">Admin</a>
+                <a href="/test-header.html" class="nav-link">This Page</a>
+            </div>
+        </div>
+
+        <script>
+            async function checkAuthStatus() {
+                const token = localStorage.getItem("auth_token");
+                const authStatusDiv = document.getElementById("authStatus");
+
+                if (!token) {
+                    authStatusDiv.innerHTML = `
+                    <div class="status warning">❌ Not logged in</div>
+                    <p>You are currently browsing as a guest. The admin dashboard link should be hidden.</p>
+                `;
+                    return null;
+                }
+
+                try {
+                    const res = await fetch("/api/users/me", {
+                        headers: { Authorization: `Bearer ${token}` },
+                    });
+
+                    if (!res.ok) {
+                        authStatusDiv.innerHTML = `
+                        <div class="status error">❌ Invalid token</div>
+                        <p>Your session has expired. Please log in again.</p>
+                    `;
+                        localStorage.removeItem("auth_token");
+                        localStorage.removeItem("user_id");
+                        return null;
+                    }
+
+                    const data = await res.json();
+                    const user = data.user;
+
+                    authStatusDiv.innerHTML = `
+                    <div class="status success">✅ Logged in as: ${
+                        user.username
+                    }</div>
+                    <p><strong>Role:</strong> ${user.role}</p>
+                    <p><strong>Email:</strong> ${user.email}</p>
+                    <p><strong>Expected behavior:</strong> ${
+                        user.role === "admin"
+                            ? "Admin dashboard link should be VISIBLE with golden styling"
+                            : "Admin dashboard link should be HIDDEN"
+                    }</p>
+                `;
+
+                    return user;
+                } catch (error) {
+                    authStatusDiv.innerHTML = `
+                    <div class="status error">❌ Error: ${error.message}</div>
+                `;
+                    return null;
+                }
+            }
+
+            function analyzeHeader() {
+                const analysisDiv = document.getElementById("headerAnalysis");
+
+                // Check if header exists
+                const header = document.querySelector(".site-header");
+                if (!header) {
+                    analysisDiv.innerHTML = `
+                    <div class="status error">❌ No .site-header found</div>
+                    <p>The consistent header was not created properly.</p>
+                `;
+                    return;
+                }
+
+                // Check header structure
+                const brand = header.querySelector(".site-brand");
+                const menuBtn = header.querySelector(".site-menu-btn");
+                const navLinks = header.querySelector(".site-nav-links");
+
+                let analysis = `<div class="status success">✅ Header structure looks good</div>`;
+                analysis += `<ul>`;
+                analysis += `<li>Brand link: ${
+                    brand ? "✅ Found" : "❌ Missing"
+                }</li>`;
+                analysis += `<li>Menu button: ${
+                    menuBtn ? "✅ Found" : "❌ Missing"
+                }</li>`;
+                analysis += `<li>Navigation links: ${
+                    navLinks ? "✅ Found" : "❌ Missing"
+                }</li>`;
+
+                if (navLinks) {
+                    const links = navLinks.querySelectorAll("a");
+                    analysis += `<li>Navigation link count: ${links.length}</li>`;
+                }
+
+                analysis += `</ul>`;
+                analysisDiv.innerHTML = analysis;
+            }
+
+            function testAdminLink() {
+                const testDiv = document.getElementById("adminLinkTest");
+
+                const adminLinks = document.querySelectorAll(
+                    "[data-requires-admin]"
+                );
+                if (adminLinks.length === 0) {
+                    testDiv.innerHTML = `
+                    <div class="status error">❌ No admin links found</div>
+                    <p>No elements with data-requires-admin attribute were found.</p>
+                `;
+                    return;
+                }
+
+                let result = `<div class="status success">✅ Found ${adminLinks.length} admin link(s)</div>`;
+                result += `<h4>Admin Link Analysis:</h4><ul>`;
+
+                adminLinks.forEach((link, index) => {
+                    const isVisible = link.style.display !== "none";
+                    const href = link.getAttribute("href") || "N/A";
+                    const text = link.textContent.trim();
+
+                    result += `<li>
+                    <strong>Link ${index + 1}:</strong> "${text}"<br>
+                    <strong>URL:</strong> ${href}<br>
+                    <strong>Visible:</strong> ${
+                        isVisible ? "✅ Yes" : "❌ No"
+                    }<br>
+                    <strong>Styles:</strong> ${
+                        link.getAttribute("style") || "None"
+                    }
+                </li>`;
+                });
+
+                result += `</ul>`;
+                testDiv.innerHTML = result;
+            }
+
+            // Quick login function
+            document
+                .getElementById("quickLogin")
+                .addEventListener("click", async () => {
+                    try {
+                        const res = await fetch("/api/users/login", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                email: "admin@example.com",
+                                password: "admin",
+                            }),
+                        });
+
+                        const data = await res.json();
+                        if (res.ok) {
+                            localStorage.setItem("auth_token", data.token);
+                            localStorage.setItem("user_id", data.userId);
+                            alert(
+                                "✅ Logged in as admin! The page will reload to show updated header."
+                            );
+                            location.reload();
+                        } else {
+                            alert("❌ Login failed: " + data.message);
+                        }
+                    } catch (error) {
+                        alert("❌ Login error: " + error.message);
+                    }
+                });
+
+            // Logout function
+            document.getElementById("logout").addEventListener("click", () => {
+                localStorage.removeItem("auth_token");
+                localStorage.removeItem("user_id");
+                alert(
+                    "✅ Logged out! The page will reload to show updated header."
+                );
+                location.reload();
+            });
+
+            // Run tests when page loads
+            document.addEventListener("DOMContentLoaded", async () => {
+                await checkAuthStatus();
+                analyzeHeader();
+                testAdminLink();
+            });
+        </script>
+
+        <script src="script.js"></script>
+    </body>
+</html>
