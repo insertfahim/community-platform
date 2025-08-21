@@ -161,3 +161,37 @@ if (demoBtn) {
         }
     });
 }
+
+// ADMIN ACCOUNT LOGIN
+const adminBtn = document.getElementById("adminLoginBtn");
+if (adminBtn) {
+    adminBtn.addEventListener("click", async () => {
+        const signinError = document.getElementById("signinError");
+        if (signinError) signinError.innerText = "";
+        try {
+            const res = await fetch("/api/users/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    email: "admin@example.com",
+                    password: "admin",
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                signinError.innerText =
+                    data.message || "❌ Admin login failed.";
+                return;
+            }
+            if (data.token) {
+                localStorage.setItem("auth_token", data.token);
+                localStorage.setItem("user_id", data.userId);
+            }
+            // Redirect to admin dashboard
+            window.location.href = "/admin.html";
+        } catch (err) {
+            console.error("Admin login error:", err);
+            if (signinError) signinError.innerText = "❌ Admin login error.";
+        }
+    });
+}

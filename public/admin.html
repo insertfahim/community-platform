@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Admin Dashboard</title>
+        <link rel="stylesheet" href="styles.css" />
+        <style>
+            .admin-dashboard {
+                background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+                min-height: 100vh;
+                padding-top: 64px; /* Account for fixed header */
+            }
+
+            .admin-content-wrapper {
+                padding: 20px;
+            }
+
+            .admin-header {
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 16px;
+                padding: 24px;
+                margin-bottom: 24px;
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+            }
+
+            .admin-header h1 {
+                color: #fff;
+                font-size: 2.5rem;
+                margin-bottom: 8px;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+
+            .admin-header p {
+                color: rgba(255, 255, 255, 0.8);
+                font-size: 1.1rem;
+            }
+
+            .admin-nav {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 20px;
+                margin-bottom: 32px;
+            }
+
+            .admin-card {
+                background: rgba(255, 255, 255, 0.95);
+                border-radius: 16px;
+                padding: 24px;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+                transition: all 0.3s ease;
+                cursor: pointer;
+                border: 1px solid rgba(255, 255, 255, 0.2);
+            }
+
+            .admin-card:hover {
+                transform: translateY(-4px);
+                box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
+                background: white;
+            }
+
+            .admin-card .card-icon {
+                font-size: 3rem;
+                margin-bottom: 16px;
+                display: block;
+            }
+
+            .admin-card h3 {
+                color: #1f2937;
+                font-size: 1.4rem;
+                margin-bottom: 8px;
+            }
+
+            .admin-card p {
+                color: #6b7280;
+                line-height: 1.6;
+            }
+
+            .admin-content {
+                background: rgba(255, 255, 255, 0.95);
+                border-radius: 16px;
+                padding: 32px;
+                margin-bottom: 24px;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+            }
+
+            .admin-section {
+                display: none;
+            }
+
+            .admin-section.active {
+                display: block;
+            }
+
+            .admin-section h2 {
+                color: #1f2937;
+                font-size: 2rem;
+                margin-bottom: 24px;
+                padding-bottom: 12px;
+                border-bottom: 2px solid #e5e7eb;
+            }
+
+            .stats-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 16px;
+                margin-bottom: 32px;
+            }
+
+            .stat-card {
+                background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+                color: white;
+                padding: 20px;
+                border-radius: 12px;
+                text-align: center;
+            }
+
+            .stat-card h4 {
+                font-size: 0.9rem;
+                margin-bottom: 8px;
+                opacity: 0.9;
+            }
+
+            .stat-card .number {
+                font-size: 2.5rem;
+                font-weight: bold;
+                margin-bottom: 4px;
+            }
+
+            .data-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 20px;
+                background: white;
+                border-radius: 12px;
+                overflow: hidden;
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+            }
+
+            .data-table th {
+                background: #f8fafc;
+                padding: 16px;
+                text-align: left;
+                font-weight: 600;
+                color: #374151;
+                border-bottom: 2px solid #e5e7eb;
+            }
+
+            .data-table td {
+                padding: 16px;
+                border-bottom: 1px solid #f3f4f6;
+                color: #4b5563;
+            }
+
+            .data-table tr:hover {
+                background: #f9fafb;
+            }
+
+            .btn {
+                padding: 8px 16px;
+                border-radius: 8px;
+                font-weight: 500;
+                cursor: pointer;
+                border: none;
+                margin: 0 4px;
+                transition: all 0.2s;
+            }
+
+            .btn-primary {
+                background: #3b82f6;
+                color: white;
+            }
+
+            .btn-primary:hover {
+                background: #2563eb;
+            }
+
+            .btn-success {
+                background: #10b981;
+                color: white;
+            }
+
+            .btn-success:hover {
+                background: #059669;
+            }
+
+            .btn-danger {
+                background: #ef4444;
+                color: white;
+            }
+
+            .btn-danger:hover {
+                background: #dc2626;
+            }
+
+            .btn-warning {
+                background: #f59e0b;
+                color: white;
+            }
+
+            .btn-warning:hover {
+                background: #d97706;
+            }
+
+            .status-badge {
+                padding: 4px 12px;
+                border-radius: 16px;
+                font-size: 0.85rem;
+                font-weight: 500;
+            }
+
+            .status-active {
+                background: #dcfce7;
+                color: #166534;
+            }
+
+            .status-pending {
+                background: #fef3c7;
+                color: #92400e;
+            }
+
+            .status-rejected {
+                background: #fee2e2;
+                color: #991b1b;
+            }
+
+            .status-approved {
+                background: #dcfce7;
+                color: #166534;
+            }
+
+            .status-hold {
+                background: #fef3c7;
+                color: #92400e;
+            }
+
+            .status-revoked {
+                background: #fee2e2;
+                color: #991b1b;
+            }
+
+            /* Volunteer management styles */
+            .volunteer-sections {
+                display: flex;
+                flex-direction: column;
+                gap: 32px;
+            }
+
+            .volunteer-section {
+                background: white;
+                border-radius: 12px;
+                padding: 24px;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            }
+
+            .volunteer-section h3 {
+                color: #374151;
+                margin-bottom: 16px;
+                padding-bottom: 8px;
+                border-bottom: 2px solid #e5e7eb;
+            }
+
+            .btn-sm {
+                padding: 6px 12px;
+                font-size: 0.875rem;
+            }
+
+            .loading {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                padding: 40px;
+                color: #6b7280;
+            }
+
+            .back-btn {
+                background: rgba(255, 255, 255, 0.1);
+                color: white;
+                padding: 12px 24px;
+                border-radius: 12px;
+                text-decoration: none;
+                font-weight: 500;
+                transition: all 0.3s ease;
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                margin-bottom: 20px;
+            }
+
+            .back-btn:hover {
+                background: rgba(255, 255, 255, 0.2);
+                transform: translateX(-2px);
+            }
+        </style>
+    </head>
+    <body class="admin-dashboard">
+        <!-- Global Header Navigation -->
+        <header class="site-header">
+            <div class="site-container">
+                <a href="/" class="site-brand">🏘️ Community</a>
+                <button class="site-menu-btn" onclick="toggleMenu()">☰</button>
+                <ul id="site-nav-links" class="site-nav-links">
+                    <li data-auth-link style="display: none">
+                        <a href="auth.html">Login</a>
+                    </li>
+                    <li><a href="/">Home</a></li>
+                    <li><a href="feed.html">Feed</a></li>
+                    <li><a href="post.html">Post Help</a></li>
+                    <li><a href="calendar.html">Calendar</a></li>
+                    <li><a href="donations.html">Donations</a></li>
+                    <li><a href="volunteers.html">Volunteers</a></li>
+                    <li><a href="emergency.html">Emergency</a></li>
+                    <li data-requires-admin>
+                        <a
+                            href="admin.html"
+                            style="
+                                background: rgba(255, 255, 255, 0.15);
+                                color: #fbbf24;
+                            "
+                            >🛡️ Dashboard</a
+                        >
+                    </li>
+                    <li data-logout-link>
+                        <a href="#" id="site-logout">Logout</a>
+                    </li>
+                </ul>
+            </div>
+        </header>
+
+        <div class="admin-content-wrapper">
+            <div class="admin-header">
+                <h1>🛡️ Admin Dashboard</h1>
+                <p>Manage your community platform</p>
+            </div>
+
+            <div class="admin-nav">
+                <div class="admin-card" onclick="showSection('overview')">
+                    <span class="card-icon">📊</span>
+                    <h3>Overview</h3>
+                    <p>View platform statistics and recent activity</p>
+                </div>
+
+                <div class="admin-card" onclick="showSection('users')">
+                    <span class="card-icon">👥</span>
+                    <h3>Users</h3>
+                    <p>Manage user accounts and permissions</p>
+                </div>
+
+                <div class="admin-card" onclick="showSection('posts')">
+                    <span class="card-icon">📝</span>
+                    <h3>Posts</h3>
+                    <p>Moderate community posts and help requests</p>
+                </div>
+
+                <div class="admin-card" onclick="showSection('volunteers')">
+                    <span class="card-icon">🤝</span>
+                    <h3>Volunteers</h3>
+                    <p>Review and manage volunteer applications</p>
+                </div>
+
+                <div class="admin-card" onclick="showSection('donations')">
+                    <span class="card-icon">💝</span>
+                    <h3>Donations</h3>
+                    <p>Track and manage donation campaigns</p>
+                </div>
+
+                <div class="admin-card" onclick="showSection('events')">
+                    <span class="card-icon">📅</span>
+                    <h3>Events</h3>
+                    <p>Manage community events and calendar</p>
+                </div>
+
+                <div class="admin-card" onclick="showSection('emergency')">
+                    <span class="card-icon">🚨</span>
+                    <h3>Emergency</h3>
+                    <p>Manage emergency contacts and alerts</p>
+                </div>
+
+                <div class="admin-card" onclick="showSection('logs')">
+                    <span class="card-icon">📋</span>
+                    <h3>Activity Logs</h3>
+                    <p>View system logs and user activities</p>
+                </div>
+            </div>
+
+            <div class="admin-content">
+                <!-- Overview Section -->
+                <div id="overview" class="admin-section active">
+                    <h2>Platform Overview</h2>
+                    <div class="stats-grid" id="statsGrid">
+                        <div class="loading">Loading statistics...</div>
+                    </div>
+                    <div id="recentActivity">
+                        <h3>Recent Activity</h3>
+                        <div class="loading">Loading recent activity...</div>
+                    </div>
+                </div>
+
+                <!-- Users Section -->
+                <div id="users" class="admin-section">
+                    <h2>User Management</h2>
+                    <div id="usersList">
+                        <div class="loading">Loading users...</div>
+                    </div>
+                </div>
+
+                <!-- Posts Section -->
+                <div id="posts" class="admin-section">
+                    <h2>Posts Management</h2>
+                    <div id="postsList">
+                        <div class="loading">Loading posts...</div>
+                    </div>
+                </div>
+
+                <!-- Volunteers Section -->
+                <div id="volunteers" class="admin-section">
+                    <h2>Volunteer Management</h2>
+                    <div id="volunteersList">
+                        <div class="loading">Loading volunteers...</div>
+                    </div>
+                </div>
+
+                <!-- Donations Section -->
+                <div id="donations" class="admin-section">
+                    <h2>Donations Management</h2>
+                    <div id="donationsList">
+                        <div class="loading">Loading donations...</div>
+                    </div>
+                </div>
+
+                <!-- Events Section -->
+                <div id="events" class="admin-section">
+                    <h2>Events Management</h2>
+                    <div id="eventsList">
+                        <div class="loading">Loading events...</div>
+                    </div>
+                </div>
+
+                <!-- Emergency Section -->
+                <div id="emergency" class="admin-section">
+                    <h2>Emergency Contacts</h2>
+                    <div id="emergencyList">
+                        <div class="loading">Loading emergency contacts...</div>
+                    </div>
+                </div>
+
+                <!-- Logs Section -->
+                <div id="logs" class="admin-section">
+                    <h2>Activity Logs</h2>
+                    <div id="logsList">
+                        <div class="loading">Loading logs...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Close admin-content-wrapper -->
+
+        <script src="admin.js"></script>
+        <script src="script.js"></script>
+    </body>
+</html>

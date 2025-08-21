@@ -55,10 +55,12 @@ function mapUserRow(row) {
         role: row.role,
         isVolunteer: row.is_volunteer,
         isVolunteerVerified: row.is_volunteer_verified,
+        volunteerStatus: row.volunteer_status || "pending", // pending, approved, rejected, hold
         volunteerProfile: row.volunteer_profile || null,
         volunteerRequestedAt: row.volunteer_requested_at || null,
         volunteerVerifiedAt: row.volunteer_verified_at || null,
         volunteerRejectedAt: row.volunteer_rejected_at || null,
+        volunteerHeldAt: row.volunteer_held_at || null,
         volunteerRejectionReason: row.volunteer_rejection_reason || null,
         volunteerAdminNotes: row.volunteer_admin_notes || null,
         created_at: row.created_at,
@@ -120,8 +122,10 @@ const requestVolunteer = async (userId) => {
         update users
         set is_volunteer = true,
             is_volunteer_verified = false,
+            volunteer_status = 'pending',
             volunteer_requested_at = now(),
             volunteer_rejected_at = null,
+            volunteer_held_at = null,
             volunteer_rejection_reason = null,
             updated_at = now()
         where id = ${userId}
@@ -137,9 +141,11 @@ const verifyVolunteer = async (userId, verified, opts = {}) => {
             update users
             set is_volunteer = true,
                 is_volunteer_verified = true,
+                volunteer_status = 'approved',
                 volunteer_admin_notes = ${opts.adminNotes || null},
                 volunteer_verified_at = now(),
                 volunteer_rejected_at = null,
+                volunteer_held_at = null,
                 volunteer_rejection_reason = null,
                 updated_at = now()
             where id = ${userId}
@@ -151,10 +157,90 @@ const verifyVolunteer = async (userId, verified, opts = {}) => {
         update users
         set is_volunteer = true,
             is_volunteer_verified = false,
+            volunteer_status = 'rejected',
             volunteer_admin_notes = ${opts.adminNotes || null},
             volunteer_verified_at = null,
             volunteer_rejected_at = now(),
+            volunteer_held_at = null,
             volunteer_rejection_reason = ${opts.reason || ""},
+            updated_at = now()
+        where id = ${userId}
+        returning id
+    `;
+    return rows.length ? String(rows[0].id) : undefined;
+};
+
+const approveVolunteer = async (userId, opts = {}) => {
+    const sql = getSql();
+    const rows = await sql`
+        update users
+        set is_volunteer = true,
+            is_volunteer_verified = true,
+            volunteer_status = 'approved',
+            volunteer_admin_notes = ${opts.adminNotes || null},
+            volunteer_verified_at = now(),
+            volunteer_rejected_at = null,
+            volunteer_held_at = null,
+            volunteer_rejection_reason = null,
+            updated_at = now()
+        where id = ${userId}
+        returning id
+    `;
+    return rows.length ? String(rows[0].id) : undefined;
+};
+
+const rejectVolunteer = async (userId, opts = {}) => {
+    const sql = getSql();
+    const rows = await sql`
+        update users
+        set is_volunteer = true,
+            is_volunteer_verified = false,
+            volunteer_status = 'rejected',
+            volunteer_admin_notes = ${opts.adminNotes || null},
+            volunteer_verified_at = null,
+            volunteer_rejected_at = now(),
+            volunteer_held_at = null,
+            volunteer_rejection_reason = ${opts.reason || "No reason provided"},
+            updated_at = now()
+        where id = ${userId}
+        returning id
+    `;
+    return rows.length ? String(rows[0].id) : undefined;
+};
+
+const holdVolunteer = async (userId, opts = {}) => {
+    const sql = getSql();
+    const rows = await sql`
+        update users
+        set is_volunteer = true,
+            is_volunteer_verified = false,
+            volunteer_status = 'hold',
+            volunteer_admin_notes = ${opts.adminNotes || null},
+            volunteer_verified_at = null,
+            volunteer_rejected_at = null,
+            volunteer_held_at = now(),
+            volunteer_rejection_reason = null,
+            updated_at = now()
+        where id = ${userId}
+        returning id
+    `;
+    return rows.length ? String(rows[0].id) : undefined;
+};
+
+const revokeVolunteer = async (userId, opts = {}) => {
+    const sql = getSql();
+    const rows = await sql`
+        update users
+        set is_volunteer = false,
+            is_volunteer_verified = false,
+            volunteer_status = 'revoked',
+            volunteer_admin_notes = ${opts.adminNotes || null},
+            volunteer_verified_at = null,
+            volunteer_rejected_at = null,
+            volunteer_held_at = null,
+            volunteer_rejection_reason = ${
+                opts.reason || "Volunteer status revoked"
+            },
             updated_at = now()
         where id = ${userId}
         returning id
@@ -247,8 +333,10 @@ const upsertVolunteerProfile = async (userId, profile) => {
         set volunteer_profile = coalesce(volunteer_profile, '{}'::jsonb) || $1::jsonb,
             is_volunteer = true,
             is_volunteer_verified = false,
+            volunteer_status = 'pending',
             volunteer_requested_at = $2,
             volunteer_rejected_at = null,
+            volunteer_held_at = null,
             volunteer_rejection_reason = null,
             updated_at = now()
         where id = $3
@@ -262,9 +350,10 @@ const listVolunteerRequests = async () => {
     const sql = getSql();
     const rows = await sql`
         select id, name, email, username, volunteer_requested_at, volunteer_profile,
-               volunteer_rejection_reason, volunteer_admin_notes
+               volunteer_rejection_reason, volunteer_admin_notes, volunteer_status,
+               volunteer_verified_at, volunteer_rejected_at, volunteer_held_at
         from users
-        where is_volunteer = true and is_volunteer_verified = false
+        where is_volunteer = true and volunteer_status in ('pending', 'hold')
         order by volunteer_requested_at desc nulls last
     `;
     return rows.map((r) => ({
@@ -276,6 +365,63 @@ const listVolunteerRequests = async () => {
         volunteerProfile: r.volunteer_profile || {},
         volunteerRejectionReason: r.volunteer_rejection_reason || null,
         volunteerAdminNotes: r.volunteer_admin_notes || null,
+        volunteerStatus: r.volunteer_status || "pending",
+        volunteerVerifiedAt: r.volunteer_verified_at,
+        volunteerRejectedAt: r.volunteer_rejected_at,
+        volunteerHeldAt: r.volunteer_held_at,
+    }));
+};
+
+const listVolunteersByStatus = async (status = null) => {
+    const sql = getSql();
+    let query;
+    let params = [];
+
+    if (status) {
+        query = `
+            select id, name, email, username, volunteer_requested_at, volunteer_profile,
+                   volunteer_rejection_reason, volunteer_admin_notes, volunteer_status,
+                   volunteer_verified_at, volunteer_rejected_at, volunteer_held_at,
+                   is_volunteer_verified, created_at
+            from users
+            where is_volunteer = true and volunteer_status = $1
+            order by 
+                case 
+                    when volunteer_status = 'approved' then volunteer_verified_at
+                    when volunteer_status = 'rejected' then volunteer_rejected_at
+                    when volunteer_status = 'hold' then volunteer_held_at
+                    else volunteer_requested_at
+                end desc nulls last
+        `;
+        params = [status];
+    } else {
+        query = `
+            select id, name, email, username, volunteer_requested_at, volunteer_profile,
+                   volunteer_rejection_reason, volunteer_admin_notes, volunteer_status,
+                   volunteer_verified_at, volunteer_rejected_at, volunteer_held_at,
+                   is_volunteer_verified, created_at
+            from users
+            where is_volunteer = true
+            order by volunteer_status, volunteer_requested_at desc nulls last
+        `;
+    }
+
+    const rows = await sql(query, params);
+    return rows.map((r) => ({
+        id: String(r.id),
+        name: r.name,
+        email: r.email,
+        username: r.username,
+        volunteerRequestedAt: r.volunteer_requested_at,
+        volunteerProfile: r.volunteer_profile || {},
+        volunteerRejectionReason: r.volunteer_rejection_reason || null,
+        volunteerAdminNotes: r.volunteer_admin_notes || null,
+        volunteerStatus: r.volunteer_status || "pending",
+        volunteerVerifiedAt: r.volunteer_verified_at,
+        volunteerRejectedAt: r.volunteer_rejected_at,
+        volunteerHeldAt: r.volunteer_held_at,
+        isVolunteerVerified: r.is_volunteer_verified,
+        createdAt: r.created_at,
     }));
 };
 
@@ -287,9 +433,14 @@ module.exports = {
     verifyPassword,
     requestVolunteer,
     verifyVolunteer,
+    approveVolunteer,
+    rejectVolunteer,
+    holdVolunteer,
+    revokeVolunteer,
     listVolunteers,
     upsertVolunteerProfile,
     listVolunteerRequests,
+    listVolunteersByStatus,
     generateUniqueUsername,
     // finder by username (kept for potential cross-feature references)
     findUserByUsername: async (username) => {

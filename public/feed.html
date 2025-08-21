@@ -8,7 +8,7 @@
         <style>
             .feed-container {
                 max-width: 900px;
-                margin: 2rem auto;
+                margin: 1rem auto;
                 padding: 1rem;
             }
             .filters {
@@ -105,6 +105,72 @@
         <script src="script.js"></script>
     </head>
     <body>
+        <!-- Navigation -->
+        <div
+            style="
+                background: #f8f9fa;
+                padding: 10px;
+                margin-bottom: 20px;
+                border-bottom: 1px solid #dee2e6;
+            "
+        >
+            <div
+                style="
+                    max-width: 900px;
+                    margin: 0 auto;
+                    display: flex;
+                    gap: 20px;
+                    align-items: center;
+                "
+            >
+                <a
+                    href="/"
+                    style="
+                        text-decoration: none;
+                        color: #495057;
+                        font-weight: bold;
+                    "
+                    >🏘️ Community</a
+                >
+                <a
+                    href="feed.html"
+                    style="text-decoration: none; color: #007bff"
+                    >Feed</a
+                >
+                <a
+                    href="post.html"
+                    style="text-decoration: none; color: #495057"
+                    >Post Help</a
+                >
+                <a
+                    href="volunteers.html"
+                    style="text-decoration: none; color: #495057"
+                    >Volunteers</a
+                >
+                <a
+                    href="donations.html"
+                    style="text-decoration: none; color: #495057"
+                    >Donations</a
+                >
+                <a
+                    href="emergency.html"
+                    style="text-decoration: none; color: #495057"
+                    >Emergency</a
+                >
+                <a
+                    href="admin.html"
+                    data-requires-admin
+                    style="
+                        text-decoration: none;
+                        color: #dc3545;
+                        font-weight: bold;
+                        display: none;
+                    "
+                    >🛡️ Dashboard</a
+                >
+            </div>
+        </div>
+
         <div class="feed-container">
             <h2>Community Feed</h2>
             <div class="filters">

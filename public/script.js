@@ -96,7 +96,16 @@ document.addEventListener("DOMContentLoaded", function () {
                         .forEach((el) => {
                             el.style.display = "";
                         });
-                    // Admin UI disabled per scope
+
+                    // Show/hide admin links based on role
+                    document
+                        .querySelectorAll("[data-requires-admin]")
+                        .forEach((el) => {
+                            el.style.display =
+                                data.user && data.user.role === "admin"
+                                    ? ""
+                                    : "none";
+                        });
                 }
             } else {
                 if (authLi) authLi.style.display = "";
@@ -105,6 +114,13 @@ document.addEventListener("DOMContentLoaded", function () {
                 // Hide features requiring auth for guests
                 document
                     .querySelectorAll("[data-requires-auth]")
+                    .forEach((el) => {
+                        el.style.display = "none";
+                    });
+
+                // Hide admin features for guests
+                document
+                    .querySelectorAll("[data-requires-admin]")
                     .forEach((el) => {
                         el.style.display = "none";
                     });
@@ -122,11 +138,19 @@ document.addEventListener("DOMContentLoaded", function () {
                 "/learning.html",
                 "/incidents.html",
                 "/history.html",
-                "/admin.html",
             ]);
             if (disabledPages.has(path)) {
                 window.location.replace("/");
                 return;
+            }
+
+            // Admin page access control
+            if (path === "/admin.html") {
+                if (!token) {
+                    window.location.replace("/auth.html");
+                    return;
+                }
+                // Additional admin role check is handled by admin.js
             }
         } catch (_err) {
             // ignore

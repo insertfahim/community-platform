@@ -5,7 +5,8 @@
         "start": "node server.js",
         "seed": "node seed/seed.js",
         "dev": "nodemon server.js",
-        "dev:quiet": "cross-env REQUEST_LOGS_ENABLED=false HISTORY_LOGS_ENABLED=false nodemon server.js"
+        "dev:quiet": "cross-env REQUEST_LOGS_ENABLED=false HISTORY_LOGS_ENABLED=false nodemon server.js",
+        "migrate": "node add-volunteer-status.js"
     },
     "dependencies": {
         "body-parser": "^2.2.0",
