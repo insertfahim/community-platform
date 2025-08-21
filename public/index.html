@@ -20,54 +20,119 @@
             </ul>
         </nav>
 
-        <div class="main-container">
-            <div class="title">
-                <span class="word word-1">Community</span><br />
-                <span class="word word-2">Support</span>
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="hero-content">
+                <div class="hero-text">
+                    <h1 class="hero-title">
+                        <span class="word word-1">Community</span><br />
+                        <span class="word word-2">Support</span>
+                    </h1>
+                    <p class="hero-subtitle">
+                        Connect, help, and grow together. Your local community
+                        platform for mutual support, emergency assistance, and
+                        meaningful connections.
+                    </p>
+                </div>
+
+                <div class="hero-image">
+                    <img
+                        src="pictures/community_fp2.png"
+                        alt="Community Illustration"
+                        loading="lazy"
+                    />
+                </div>
             </div>
 
-            <div class="image-container">
-                <img
-                    src="pictures/community_fp2.png"
-                    alt="Community Illustration"
-                />
+            <!-- Call to Action Buttons -->
+            <div class="cta-buttons">
+                <a href="post.html" class="cta-btn primary">
+                    <span class="btn-icon">📝</span>
+                    <span class="btn-text">Create Post</span>
+                </a>
+                <a href="feed.html" class="cta-btn secondary">
+                    <span class="btn-icon">🔍</span>
+                    <span class="btn-text">Browse Posts</span>
+                </a>
+                <a href="emergency.html" class="cta-btn emergency">
+                    <span class="btn-icon">🚨</span>
+                    <span class="btn-text">Emergency</span>
+                </a>
             </div>
-            <div style="margin-top: 1rem; display: flex; gap: 0.5rem">
-                <a
-                    href="post.html"
-                    style="
-                        padding: 0.6rem 1rem;
-                        background: #2c45c5;
-                        color: #fff;
-                        border-radius: 8px;
-                        text-decoration: none;
-                    "
-                    >Create Post</a
-                >
-                <a
-                    href="feed.html"
-                    style="
-                        padding: 0.6rem 1rem;
-                        background: #3a3a8f;
-                        color: #fff;
-                        border-radius: 8px;
-                        text-decoration: none;
-                    "
-                    >View Feed</a
-                >
-                <a
-                    href="emergency.html"
-                    style="
-                        padding: 0.6rem 1rem;
-                        background: #f36363;
-                        color: #fff;
-                        border-radius: 8px;
-                        text-decoration: none;
-                    "
-                    >Emergency</a
-                >
+        </section>
+
+        <!-- Features Section -->
+        <section class="features-section">
+            <div class="features-container">
+                <h2 class="features-title">How Can We Help You Today?</h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">💬</div>
+                        <h3>Community Feed</h3>
+                        <p>
+                            Share updates, ask for help, and connect with your
+                            neighbors
+                        </p>
+                        <a href="feed.html" class="feature-link">View Feed →</a>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">🎁</div>
+                        <h3>Donations</h3>
+                        <p>
+                            Give and receive donations within your local
+                            community
+                        </p>
+                        <a href="donations.html" class="feature-link"
+                            >Donate Now →</a
+                        >
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">🤝</div>
+                        <h3>Volunteers</h3>
+                        <p>
+                            Find volunteer opportunities or offer your skills to
+                            help others
+                        </p>
+                        <a href="volunteers.html" class="feature-link"
+                            >Get Involved →</a
+                        >
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">📅</div>
+                        <h3>Events</h3>
+                        <p>Discover local events and community gatherings</p>
+                        <a href="calendar.html" class="feature-link"
+                            >See Events →</a
+                        >
+                    </div>
+                </div>
             </div>
-        </div>
+        </section>
+
+        <!-- Stats Section -->
+        <section class="stats-section">
+            <div class="stats-container">
+                <div class="stat-item">
+                    <div class="stat-number">500+</div>
+                    <div class="stat-label">Community Members</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">1,200+</div>
+                    <div class="stat-label">Posts Shared</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">350+</div>
+                    <div class="stat-label">People Helped</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">50+</div>
+                    <div class="stat-label">Events Organized</div>
+                </div>
+            </div>
+        </section>
 
         <script src="script.js"></script>
     </body>
