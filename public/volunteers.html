@@ -8,7 +8,7 @@
         <style>
             .container {
                 max-width: 1100px;
-                margin: 2rem auto;
+                margin: 1rem auto;
                 background: #fff;
                 padding: 1rem;
                 border-radius: 12px;
@@ -163,6 +163,72 @@
         </style>
     </head>
     <body>
+        <!-- Navigation -->
+        <div
+            style="
+                background: #f8f9fa;
+                padding: 10px;
+                margin-bottom: 20px;
+                border-bottom: 1px solid #dee2e6;
+            "
+        >
+            <div
+                style="
+                    max-width: 1100px;
+                    margin: 0 auto;
+                    display: flex;
+                    gap: 20px;
+                    align-items: center;
+                "
+            >
+                <a
+                    href="/"
+                    style="
+                        text-decoration: none;
+                        color: #495057;
+                        font-weight: bold;
+                    "
+                    >🏘️ Community</a
+                >
+                <a
+                    href="feed.html"
+                    style="text-decoration: none; color: #495057"
+                    >Feed</a
+                >
+                <a
+                    href="post.html"
+                    style="text-decoration: none; color: #495057"
+                    >Post Help</a
+                >
+                <a
+                    href="volunteers.html"
+                    style="text-decoration: none; color: #007bff"
+                    >Volunteers</a
+                >
+                <a
+                    href="donations.html"
+                    style="text-decoration: none; color: #495057"
+                    >Donations</a
+                >
+                <a
+                    href="emergency.html"
+                    style="text-decoration: none; color: #495057"
+                    >Emergency</a
+                >
+                <a
+                    href="admin.html"
+                    data-requires-admin
+                    style="
+                        text-decoration: none;
+                        color: #dc3545;
+                        font-weight: bold;
+                        display: none;
+                    "
+                    >🛡️ Dashboard</a
+                >
+            </div>
+        </div>
+
         <div class="container">
             <div class="header">
                 <div>
@@ -422,9 +488,6 @@
                   .join(" ")}
             </div>
             <div class="actions">
-              <button class="btn" onclick="openMessage('${
-                  v.username || ""
-              }')">Message</button>
               <button class="btn primary" ${
                   verified ? "" : "disabled"
               } onclick="referVolunteer('${v.username || ""}')">Refer</button>
@@ -434,11 +497,9 @@
                 });
             }
 
+            // Messaging disabled
             function openMessage(username) {
-                if (!token) return (window.location.href = "/auth.html");
-                const url = new URL("/messages.html", window.location.origin);
-                if (username) url.searchParams.set("to", username);
-                window.location.href = url.toString();
+                return;
             }
 
             function referVolunteer(username) {

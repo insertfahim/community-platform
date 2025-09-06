@@ -1,6 +1,6 @@
 // Local dev server only. In Vercel, the entry is api/index.js
 const app = require("./app");
-const connectToDatabase = require("./config/db");
+const { connectToDatabase } = require("./config/db");
 const PORT = process.env.PORT || 3000;
 
 connectToDatabase().then(() => {

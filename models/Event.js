@@ -1,60 +1,75 @@
-const mongoose = require("mongoose");
-
-const eventSchema = new mongoose.Schema(
-    {
-        title: { type: String, required: true },
-        description: { type: String, required: true },
-        startAt: { type: Date, required: true },
-        endAt: { type: Date, required: true },
-        location: { type: String, required: true },
-        ownerId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "User",
-            required: true,
-        },
-    },
-    { timestamps: true }
-);
-
-const EventModel =
-    mongoose.models.Event || mongoose.model("Event", eventSchema);
+const { getSql } = require("../config/db");
 
 const createEvent = async (data) => {
-    const doc = await EventModel.create(data);
-    return doc._id.toString();
+    const sql = getSql();
+    const rows = await sql`
+        insert into events (title, description, start_at, end_at, location, owner_id)
+        values (${data.title}, ${data.description}, ${data.startAt}, ${data.endAt}, ${data.location}, ${data.ownerId})
+        returning id
+    `;
+    return String(rows[0].id);
 };
 
 const listEvents = async (userId, filters = {}) => {
-    const query = { ownerId: userId };
-    if (filters.from) query.startAt = { $gte: new Date(filters.from) };
-    if (filters.to)
-        query.endAt = Object.assign(query.endAt || {}, {
-            $lte: new Date(filters.to),
-        });
-    return EventModel.find(query).sort({ startAt: 1 }).lean();
+    const sql = getSql();
+    const conditions = ["owner_id = $1"];
+    const params = [userId];
+    if (filters.from) {
+        params.push(new Date(filters.from));
+        conditions.push(`start_at >= $${params.length}`);
+    }
+    if (filters.to) {
+        params.push(new Date(filters.to));
+        conditions.push(`end_at <= $${params.length}`);
+    }
+    const whereClause = `where ${conditions.join(" and ")}`;
+    const query = `
+        select * from events
+        ${whereClause}
+        order by start_at asc
+    `;
+    const rows = await sql(query, params);
+    return rows;
 };
 
 const updateEvent = async (id, ownerId, updates) => {
-    const allowed = ["title", "description", "startAt", "endAt", "location"];
-    const safe = {};
-    Object.keys(updates || {}).forEach((k) => {
-        if (allowed.includes(k)) safe[k] = updates[k];
-    });
-    const doc = await EventModel.findOneAndUpdate(
-        { _id: id, ownerId },
-        { $set: safe },
-        { new: true }
-    ).lean();
-    return doc ? doc._id.toString() : undefined;
+    const sql = getSql();
+    const mapping = {
+        title: "title",
+        description: "description",
+        startAt: "start_at",
+        endAt: "end_at",
+        location: "location",
+    };
+    const sets = [];
+    const params = [];
+    for (const [k, v] of Object.entries(updates || {})) {
+        if (Object.prototype.hasOwnProperty.call(mapping, k)) {
+            params.push(v);
+            sets.push(`${mapping[k]} = $${params.length}`);
+        }
+    }
+    if (!sets.length) return undefined;
+    params.push(id);
+    params.push(ownerId);
+    const query = `
+        update events
+        set ${sets.join(", ")}, updated_at = now()
+        where id = $${params.length - 1} and owner_id = $${params.length}
+        returning id
+    `;
+    const rows = await sql(query, params);
+    return rows.length ? String(rows[0].id) : undefined;
 };
 
 const deleteEvent = async (id, ownerId) => {
-    const doc = await EventModel.findOneAndDelete({ _id: id, ownerId }).lean();
-    return !!doc;
+    const sql = getSql();
+    const rows =
+        await sql`delete from events where id = ${id} and owner_id = ${ownerId} returning id`;
+    return rows.length > 0;
 };
 
 module.exports = {
-    EventModel,
     createEvent,
     listEvents,
     updateEvent,

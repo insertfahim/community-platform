@@ -1,48 +1,38 @@
 const express = require("express");
 const router = express.Router();
-const { requireAuth, requireRole } = require("../middleware/auth");
-const { UserModel } = require("../models/User");
+const controller = require("../controllers/adminController");
+const { requireAuth } = require("../middleware/auth");
 
-// All admin routes require admin role
-router.use(requireAuth, requireRole("admin"));
+// All admin routes require authentication
+router.use(requireAuth);
 
-// List users (basic fields)
-router.get("/users", async (_req, res) => {
-    try {
-        const users = await UserModel.find({})
-            .select(
-                "name email role isVolunteer isVolunteerVerified created_at"
-            )
-            .lean();
-        res.json({ users });
-    } catch (e) {
-        console.error("Admin list users error:", e);
-        res.status(500).json({ message: "Server error" });
-    }
-});
+// Statistics
+router.get("/stats", controller.getStats);
 
-// Change a user's role
-router.post("/users/:id/role", async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { role } = req.body;
-        if (!role || !["user", "admin"].includes(role)) {
-            return res.status(400).json({ message: "Invalid role" });
-        }
-        const updated = await UserModel.findByIdAndUpdate(
-            id,
-            { $set: { role } },
-            { new: true }
-        )
-            .select("name email role")
-            .lean();
-        if (!updated)
-            return res.status(404).json({ message: "User not found" });
-        res.json({ user: updated });
-    } catch (e) {
-        console.error("Admin set role error:", e);
-        res.status(500).json({ message: "Server error" });
-    }
-});
+// User management
+router.get("/users", controller.getUsers);
+router.put("/users/:userId/role", controller.updateUserRole);
+router.delete("/users/:userId", controller.deleteUser);
+
+// Volunteer management
+router.get("/volunteers/requests", controller.getVolunteerRequests);
+router.get("/volunteers/status/:status", controller.getVolunteersByStatus);
+router.get("/volunteers/status", controller.getVolunteersByStatus);
+router.post("/volunteers/:userId/approve", controller.approveVolunteerStatus);
+router.post("/volunteers/:userId/reject", controller.rejectVolunteerStatus);
+router.post("/volunteers/:userId/hold", controller.holdVolunteerStatus);
+router.post("/volunteers/:userId/revoke", controller.revokeVolunteerStatus);
+
+// Content management
+router.delete("/posts/:postId", controller.deletePost);
+router.delete("/donations/:donationId", controller.deleteDonation);
+router.delete("/events/:eventId", controller.deleteEvent);
+
+// Emergency contacts management
+router.post("/emergency", controller.addEmergencyContact);
+router.delete("/emergency/:contactId", controller.deleteEmergencyContact);
+
+// Activity logs
+router.get("/logs", controller.getLogs);
 
 module.exports = router;

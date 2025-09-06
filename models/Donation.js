@@ -1,82 +1,93 @@
-const mongoose = require("mongoose");
-
-const donationSchema = new mongoose.Schema(
-    {
-        kind: {
-            type: String,
-            enum: ["clothes", "food", "books", "other"],
-            required: true,
-        },
-        description: { type: String, required: true },
-        location: { type: String, required: true },
-        contact: { type: String, required: true },
-        status: {
-            type: String,
-            enum: ["available", "claimed", "donated"],
-            default: "available",
-        },
-        ownerId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "User",
-            required: true,
-        },
-    },
-    { timestamps: true }
-);
-
-const DonationModel =
-    mongoose.models.Donation || mongoose.model("Donation", donationSchema);
+const { getSql } = require("../config/db");
 
 const createDonation = async (data) => {
-    const doc = await DonationModel.create(data);
-    return doc._id.toString();
+    const sql = getSql();
+    const rows = await sql`
+        insert into donations (kind, description, location, contact, status, owner_id)
+        values (${data.kind}, ${data.description}, ${data.location}, ${
+        data.contact
+    }, ${data.status || "available"}, ${data.ownerId})
+        returning id
+    `;
+    return String(rows[0].id);
 };
 
 const listDonations = async (filters = {}) => {
-    const { kind, status, ownerId } = filters;
-    const query = {};
-    if (kind) query.kind = kind;
-    if (status) query.status = status;
-    if (ownerId) query.ownerId = ownerId;
-    return DonationModel.find(query)
-        .populate({ path: "ownerId", select: "username name" })
-        .sort({ createdAt: -1 })
-        .lean();
+    const sql = getSql();
+    const conditions = [];
+    const params = [];
+    if (filters.kind) {
+        params.push(filters.kind);
+        conditions.push(`d.kind = $${params.length}`);
+    }
+    if (filters.status) {
+        params.push(filters.status);
+        conditions.push(`d.status = $${params.length}`);
+    }
+    if (filters.ownerId) {
+        params.push(filters.ownerId);
+        conditions.push(`d.owner_id = $${params.length}`);
+    }
+    const whereClause = conditions.length
+        ? `where ${conditions.join(" and ")}`
+        : "";
+    const query = `
+        select d.*, u.username as owner_username, u.name as owner_name
+        from donations d
+        left join users u on u.id = d.owner_id
+        ${whereClause}
+        order by d.created_at desc
+    `;
+    const rows = await sql(query, params);
+    return rows.map((r) => ({
+        id: String(r.id),
+        kind: r.kind,
+        description: r.description,
+        location: r.location,
+        contact: r.contact,
+        status: r.status,
+        ownerId: r.owner_id
+            ? { username: r.owner_username, name: r.owner_name }
+            : null,
+        createdAt: r.created_at,
+        updatedAt: r.updated_at,
+    }));
 };
 
 const updateDonationStatus = async (id, status) => {
-    const doc = await DonationModel.findByIdAndUpdate(
-        id,
-        { $set: { status } },
-        { new: true }
-    ).lean();
-    return doc ? doc._id.toString() : undefined;
+    const sql = getSql();
+    const rows = await sql`
+        update donations set status = ${status}, updated_at = now() where id = ${id} returning id
+    `;
+    return rows.length ? String(rows[0].id) : undefined;
 };
 
 const updateDonation = async (id, ownerId, updates) => {
+    const sql = getSql();
     const allowed = ["kind", "description", "location", "contact", "status"];
-    const safe = {};
-    Object.keys(updates || {}).forEach((k) => {
-        if (allowed.includes(k)) safe[k] = updates[k];
-    });
-    const doc = await DonationModel.findOneAndUpdate(
-        { _id: id, ownerId },
-        { $set: safe },
-        { new: true }
-    ).lean();
-    return doc ? doc._id.toString() : undefined;
+    const sets = [];
+    for (const key of allowed) {
+        if (Object.prototype.hasOwnProperty.call(updates || {}, key)) {
+            sets.push(sql([`${key} = `], [updates[key]]));
+        }
+    }
+    if (!sets.length) return undefined;
+    const rows = await sql`
+        update donations set ${sql.join(sets, sql`, `)}, updated_at = now()
+        where id = ${id} and owner_id = ${ownerId}
+        returning id
+    `;
+    return rows.length ? String(rows[0].id) : undefined;
 };
 
 const deleteDonation = async (id, ownerId) => {
-    const doc = await DonationModel.findOneAndDelete({
-        _id: id,
-        ownerId,
-    }).lean();
-    return !!doc;
+    const sql = getSql();
+    const rows =
+        await sql`delete from donations where id = ${id} and owner_id = ${ownerId} returning id`;
+    return rows.length > 0;
 };
 
 module.exports = {
-    DonationModel,
     createDonation,
     listDonations,
     updateDonationStatus,

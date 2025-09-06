@@ -1,59 +1,95 @@
-const mongoose = require("mongoose");
-
-const postSchema = new mongoose.Schema(
-    {
-        type: { type: String, enum: ["request", "offer"], default: "request" },
-        title: { type: String, required: true },
-        description: { type: String, required: true },
-        category: { type: String, required: true },
-        priority: { type: String, required: true },
-        location: { type: String, required: true },
-        contact_info: { type: String, required: true },
-        ownerId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-        status: {
-            type: String,
-            enum: ["active", "completed", "cancelled"],
-            default: "active",
-        },
-    },
-    { timestamps: true }
-);
-
-const PostModel = mongoose.models.Post || mongoose.model("Post", postSchema);
+const { getSql } = require("../config/db");
 
 const createPost = async (postData) => {
-    const doc = await PostModel.create(postData);
-    return doc._id.toString();
+    const sql = getSql();
+    const rows = await sql`
+        insert into posts (type, title, description, category, priority, location, contact_info, owner_id, status)
+        values (${postData.type || "request"}, ${postData.title}, ${postData.description}, ${postData.category}, ${postData.priority}, ${postData.location}, ${postData.contact_info}, ${postData.ownerId || null}, ${postData.status || "active"})
+        returning id
+    `;
+    return String(rows[0].id);
 };
 
 const listPosts = async ({ category, type, status, ownerId }) => {
-    const query = {};
-    if (category) query.category = category;
-    if (type) query.type = type;
-    if (status) query.status = status;
-    if (ownerId) query.ownerId = ownerId;
-    return PostModel.find(query)
-        .populate({ path: "ownerId", select: "username name" })
-        .sort({ createdAt: -1 })
-        .lean();
+    const sql = getSql();
+    const conditions = [];
+    const params = [];
+    if (category) {
+        params.push(category);
+        conditions.push(`p.category = $${params.length}`);
+    }
+    if (type) {
+        params.push(type);
+        conditions.push(`p.type = $${params.length}`);
+    }
+    if (status) {
+        params.push(status);
+        conditions.push(`p.status = $${params.length}`);
+    }
+    if (ownerId) {
+        params.push(ownerId);
+        conditions.push(`p.owner_id = $${params.length}`);
+    }
+    const whereClause = conditions.length ? `where ${conditions.join(" and ")}` : "";
+    const query = `
+        select p.*, u.username as owner_username, u.name as owner_name
+        from posts p
+        left join users u on u.id = p.owner_id
+        ${whereClause}
+        order by p.created_at desc
+    `;
+    const rows = await sql(query, params);
+    return rows.map((r) => ({
+        id: String(r.id),
+        type: r.type,
+        title: r.title,
+        description: r.description,
+        category: r.category,
+        priority: r.priority,
+        location: r.location,
+        contact_info: r.contact_info,
+        status: r.status,
+        createdAt: r.created_at,
+        updatedAt: r.updated_at,
+        ownerId: r.owner_id
+            ? { username: r.owner_username, name: r.owner_name }
+            : null,
+    }));
 };
 
 const updatePostStatus = async (id, status) => {
-    const updated = await PostModel.findByIdAndUpdate(
-        id,
-        { $set: { status } },
-        { new: true }
-    ).lean();
-    return updated ? updated._id.toString() : undefined;
+    const sql = getSql();
+    const rows = await sql`
+        update posts set status = ${status}, updated_at = now()
+        where id = ${id}
+        returning id
+    `;
+    return rows.length ? String(rows[0].id) : undefined;
 };
 
 const getPostById = async (id) => {
-    const doc = await PostModel.findById(id).lean();
-    if (!doc) return undefined;
-    return { ...doc, id: doc._id.toString() };
+    const sql = getSql();
+    const rows = await sql`select * from posts where id = ${id} limit 1`;
+    if (!rows[0]) return undefined;
+    const r = rows[0];
+    return {
+        id: String(r.id),
+        type: r.type,
+        title: r.title,
+        description: r.description,
+        category: r.category,
+        priority: r.priority,
+        location: r.location,
+        contact_info: r.contact_info,
+        ownerId: r.owner_id,
+        status: r.status,
+        createdAt: r.created_at,
+        updatedAt: r.updated_at,
+    };
 };
 
 const updatePostFields = async (id, updates) => {
+    const sql = getSql();
     const allowed = [
         "title",
         "description",
@@ -64,31 +100,37 @@ const updatePostFields = async (id, updates) => {
         "type",
         "status",
     ];
-    const $set = {};
+    const sets = [];
+    const params = [];
     for (const key of allowed) {
         if (Object.prototype.hasOwnProperty.call(updates, key)) {
-            $set[key] = updates[key];
+            const col = key; // same column names
+            params.push(updates[key]);
+            sets.push(`${col} = $${params.length}`);
         }
     }
-    if (Object.keys($set).length === 0) return undefined;
-    const updated = await PostModel.findByIdAndUpdate(
-        id,
-        { $set },
-        { new: true }
-    ).lean();
-    return updated ? updated._id.toString() : undefined;
+    if (!sets.length) return undefined;
+    params.push(id);
+    const query = `
+        update posts
+        set ${sets.join(", ")}, updated_at = now()
+        where id = $${params.length}
+        returning id
+    `;
+    const rows = await sql(query, params);
+    return rows.length ? String(rows[0].id) : undefined;
 };
 
 const deletePostById = async (id) => {
-    const res = await PostModel.findByIdAndDelete(id).lean();
-    return !!res;
+    const sql = getSql();
+    const rows = await sql`delete from posts where id = ${id} returning id`;
+    return rows.length > 0;
 };
 
 module.exports = {
     createPost,
     listPosts,
     updatePostStatus,
-    PostModel,
     getPostById,
     updatePostFields,
     deletePostById,

@@ -5,14 +5,15 @@
         "start": "node server.js",
         "seed": "node seed/seed.js",
         "dev": "nodemon server.js",
-        "dev:quiet": "cross-env REQUEST_LOGS_ENABLED=false HISTORY_LOGS_ENABLED=false nodemon server.js"
+        "dev:quiet": "cross-env REQUEST_LOGS_ENABLED=false HISTORY_LOGS_ENABLED=false nodemon server.js",
+        "migrate": "node add-volunteer-status.js"
     },
     "dependencies": {
         "body-parser": "^2.2.0",
         "cors": "^2.8.5",
         "dotenv": "^17.2.1",
         "express": "^5.1.0",
-        "mongoose": "^8.5.1"
+        "@neondatabase/serverless": "^0.9.5"
     },
     "devDependencies": {
         "cross-env": "^7.0.3",

@@ -2,17 +2,18 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 const { attachUser } = require("./middleware/auth");
+const { connectToDatabase } = require("./config/db");
 
 // routes
 const emergencyRoutes = require("./routes/emergencyRoutes");
 const postRoutes = require("./routes/postRoutes");
 const authRoutes = require("./routes/authRoutes");
-const messageRoutes = require("./routes/messageRoutes");
+// const messageRoutes = require("./routes/messageRoutes"); // disabled per scope
 const eventRoutes = require("./routes/eventRoutes");
 const donationRoutes = require("./routes/donationRoutes");
-const learningRoutes = require("./routes/learningRoutes");
-const incidentRoutes = require("./routes/incidentRoutes");
-const historyRoutes = require("./routes/historyRoutes");
+// const learningRoutes = require("./routes/learningRoutes"); // disabled per scope
+// const incidentRoutes = require("./routes/incidentRoutes"); // disabled per scope
+// const historyRoutes = require("./routes/historyRoutes"); // disabled per scope
 const volunteerRoutes = require("./routes/volunteerRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 
@@ -36,6 +37,10 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use(express.json());
+// Ensure DB initialized for any cold starts in long-lived server
+connectToDatabase().catch((e) => {
+    console.error("DB init error:", e);
+});
 app.use(attachUser);
 
 app.use((req, _res, next) => {
@@ -60,29 +65,22 @@ if (REQUEST_LOGS_ENABLED) console.log("✅ postRoutes loaded");
 app.use("/api/users", authRoutes);
 if (REQUEST_LOGS_ENABLED) console.log("✅ authRoutes loaded");
 
-app.use("/api/messages", messageRoutes);
-if (REQUEST_LOGS_ENABLED) console.log("✅ messageRoutes loaded");
-
 app.use("/api/events", eventRoutes);
 if (REQUEST_LOGS_ENABLED) console.log("✅ eventRoutes loaded");
 
 app.use("/api/donations", donationRoutes);
 if (REQUEST_LOGS_ENABLED) console.log("✅ donationRoutes loaded");
 
-app.use("/api/learning", learningRoutes);
-if (REQUEST_LOGS_ENABLED) console.log("✅ learningRoutes loaded");
-
-app.use("/api/incidents", incidentRoutes);
-if (REQUEST_LOGS_ENABLED) console.log("✅ incidentRoutes loaded");
-
-app.use("/api/history", historyRoutes);
-if (REQUEST_LOGS_ENABLED) console.log("✅ historyRoutes loaded");
-
 app.use("/api/volunteers", volunteerRoutes);
 if (REQUEST_LOGS_ENABLED) console.log("✅ volunteerRoutes loaded");
 
 app.use("/api/admin", adminRoutes);
 if (REQUEST_LOGS_ENABLED) console.log("✅ adminRoutes loaded");
+// app.use("/api/messages", messageRoutes); // disabled per scope
+// app.use("/api/learning", learningRoutes); // disabled per scope
+// app.use("/api/incidents", incidentRoutes); // disabled per scope
+// app.use("/api/history", historyRoutes); // disabled per scope
+// app.use("/api/admin", adminRoutes); // disabled per scope
 
 // Serve static files when the app is used behind a server (local dev).
 app.use(express.static("public"));
@@ -106,6 +104,11 @@ app.get("/auth", (_req, res) => {
 app.get("/emergency.html", (_req, res) => {
     if (REQUEST_LOGS_ENABLED) console.log("📄 Serving emergency.html");
     res.sendFile(path.join(__dirname, "public", "emergency.html"));
+});
+
+app.get("/admin.html", (_req, res) => {
+    if (REQUEST_LOGS_ENABLED) console.log("📄 Serving admin.html");
+    res.sendFile(path.join(__dirname, "public", "admin.html"));
 });
 
 // 404 handler
