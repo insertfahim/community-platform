@@ -25,7 +25,7 @@ async function checkAdminAuth() {
         const data = await res.json();
         if (data.user.role !== "admin") {
             alert("Access denied. Admin privileges required.");
-            window.location.href = "/";
+            window.location.href = "index.html";
             return;
         }
 

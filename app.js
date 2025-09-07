@@ -8,12 +8,12 @@ const { connectToDatabase } = require("./config/db");
 const emergencyRoutes = require("./routes/emergencyRoutes");
 const postRoutes = require("./routes/postRoutes");
 const authRoutes = require("./routes/authRoutes");
-// const messageRoutes = require("./routes/messageRoutes"); // disabled per scope
+const messageRoutes = require("./routes/messageRoutes");
 const eventRoutes = require("./routes/eventRoutes");
 const donationRoutes = require("./routes/donationRoutes");
-// const learningRoutes = require("./routes/learningRoutes"); // disabled per scope
-// const incidentRoutes = require("./routes/incidentRoutes"); // disabled per scope
-// const historyRoutes = require("./routes/historyRoutes"); // disabled per scope
+const learningRoutes = require("./routes/learningRoutes");
+const incidentRoutes = require("./routes/incidentRoutes");
+const historyRoutes = require("./routes/historyRoutes");
 const volunteerRoutes = require("./routes/volunteerRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 
@@ -65,22 +65,29 @@ if (REQUEST_LOGS_ENABLED) console.log("✅ postRoutes loaded");
 app.use("/api/users", authRoutes);
 if (REQUEST_LOGS_ENABLED) console.log("✅ authRoutes loaded");
 
+app.use("/api/messages", messageRoutes);
+if (REQUEST_LOGS_ENABLED) console.log("✅ messageRoutes loaded");
+
 app.use("/api/events", eventRoutes);
 if (REQUEST_LOGS_ENABLED) console.log("✅ eventRoutes loaded");
 
 app.use("/api/donations", donationRoutes);
 if (REQUEST_LOGS_ENABLED) console.log("✅ donationRoutes loaded");
 
+app.use("/api/learning", learningRoutes);
+if (REQUEST_LOGS_ENABLED) console.log("✅ learningRoutes loaded");
+
+app.use("/api/incidents", incidentRoutes);
+if (REQUEST_LOGS_ENABLED) console.log("✅ incidentRoutes loaded");
+
+app.use("/api/history", historyRoutes);
+if (REQUEST_LOGS_ENABLED) console.log("✅ historyRoutes loaded");
+
 app.use("/api/volunteers", volunteerRoutes);
 if (REQUEST_LOGS_ENABLED) console.log("✅ volunteerRoutes loaded");
 
 app.use("/api/admin", adminRoutes);
 if (REQUEST_LOGS_ENABLED) console.log("✅ adminRoutes loaded");
-// app.use("/api/messages", messageRoutes); // disabled per scope
-// app.use("/api/learning", learningRoutes); // disabled per scope
-// app.use("/api/incidents", incidentRoutes); // disabled per scope
-// app.use("/api/history", historyRoutes); // disabled per scope
-// app.use("/api/admin", adminRoutes); // disabled per scope
 
 // Serve static files when the app is used behind a server (local dev).
 app.use(express.static("public"));
@@ -104,6 +111,26 @@ app.get("/auth", (_req, res) => {
 app.get("/emergency.html", (_req, res) => {
     if (REQUEST_LOGS_ENABLED) console.log("📄 Serving emergency.html");
     res.sendFile(path.join(__dirname, "public", "emergency.html"));
+});
+
+app.get("/messages.html", (_req, res) => {
+    if (REQUEST_LOGS_ENABLED) console.log("📄 Serving messages.html");
+    res.sendFile(path.join(__dirname, "public", "messages.html"));
+});
+
+app.get("/learning.html", (_req, res) => {
+    if (REQUEST_LOGS_ENABLED) console.log("📄 Serving learning.html");
+    res.sendFile(path.join(__dirname, "public", "learning.html"));
+});
+
+app.get("/incidents.html", (_req, res) => {
+    if (REQUEST_LOGS_ENABLED) console.log("📄 Serving incidents.html");
+    res.sendFile(path.join(__dirname, "public", "incidents.html"));
+});
+
+app.get("/history.html", (_req, res) => {
+    if (REQUEST_LOGS_ENABLED) console.log("📄 Serving history.html");
+    res.sendFile(path.join(__dirname, "public", "history.html"));
 });
 
 app.get("/admin.html", (_req, res) => {

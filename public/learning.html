@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Learning Exchange - Community Platform</title>
+        <link rel="stylesheet" href="styles.css" />
+        <style>
+            .learning-container {
+                max-width: 1200px;
+                margin: 1rem auto;
+                padding: 1rem;
+            }
+
+            .header-section {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 2rem;
+                border-radius: 12px;
+                margin-bottom: 2rem;
+                text-align: center;
+            }
+
+            .header-section h1 {
+                margin: 0 0 0.5rem 0;
+                font-size: 2.5rem;
+            }
+
+            .header-section p {
+                margin: 0;
+                opacity: 0.9;
+                font-size: 1.1rem;
+            }
+
+            .actions-bar {
+                display: flex;
+                gap: 1rem;
+                margin-bottom: 2rem;
+                flex-wrap: wrap;
+                align-items: center;
+            }
+
+            .btn {
+                padding: 0.5rem 1rem;
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
+                font-weight: 500;
+                text-decoration: none;
+                display: inline-block;
+                transition: all 0.2s;
+            }
+
+            .btn-primary {
+                background: #667eea;
+                color: white;
+            }
+
+            .btn-primary:hover {
+                background: #5a6fd8;
+                transform: translateY(-1px);
+            }
+
+            .filters {
+                display: flex;
+                gap: 0.5rem;
+                flex-wrap: wrap;
+                align-items: center;
+            }
+
+            .filters select,
+            .filters input {
+                padding: 0.4rem 0.6rem;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                font-size: 0.9rem;
+            }
+
+            .sessions-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+                gap: 1.5rem;
+                margin-top: 1rem;
+            }
+
+            .session-card {
+                background: white;
+                border: 1px solid #e6e6e6;
+                border-radius: 12px;
+                padding: 1.5rem;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+                transition: all 0.2s;
+            }
+
+            .session-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+            }
+
+            .session-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                margin-bottom: 1rem;
+            }
+
+            .session-type {
+                padding: 0.25rem 0.75rem;
+                border-radius: 20px;
+                font-size: 0.8rem;
+                font-weight: 600;
+                text-transform: uppercase;
+            }
+
+            .type-teach {
+                background: #e3f2fd;
+                color: #1976d2;
+            }
+
+            .type-learn {
+                background: #f3e5f5;
+                color: #7b1fa2;
+            }
+
+            .type-exchange {
+                background: #e8f5e8;
+                color: #388e3c;
+            }
+
+            .session-title {
+                font-size: 1.25rem;
+                font-weight: 600;
+                margin: 0.5rem 0;
+                color: #333;
+            }
+
+            .session-meta {
+                display: flex;
+                gap: 1rem;
+                margin: 0.75rem 0;
+                font-size: 0.9rem;
+                color: #666;
+            }
+
+            .session-meta span {
+                display: flex;
+                align-items: center;
+                gap: 0.25rem;
+            }
+
+            .session-description {
+                color: #555;
+                line-height: 1.5;
+                margin: 1rem 0;
+            }
+
+            .session-footer {
+                border-top: 1px solid #f0f0f0;
+                padding-top: 1rem;
+                margin-top: 1rem;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                font-size: 0.9rem;
+                color: #666;
+            }
+
+            .contact-info {
+                background: #f8f9fa;
+                padding: 0.5rem;
+                border-radius: 4px;
+                font-size: 0.85rem;
+                margin-top: 0.5rem;
+            }
+
+            .level-badge {
+                padding: 0.2rem 0.5rem;
+                border-radius: 12px;
+                font-size: 0.75rem;
+                font-weight: 500;
+            }
+
+            .level-beginner {
+                background: #e8f5e8;
+                color: #2e7d32;
+            }
+
+            .level-intermediate {
+                background: #fff3e0;
+                color: #f57c00;
+            }
+
+            .level-advanced {
+                background: #ffebee;
+                color: #c62828;
+            }
+
+            .level-all {
+                background: #f3e5f5;
+                color: #7b1fa2;
+            }
+
+            .empty-state {
+                text-align: center;
+                padding: 3rem;
+                color: #666;
+            }
+
+            .empty-state img {
+                width: 120px;
+                opacity: 0.5;
+                margin-bottom: 1rem;
+            }
+
+            .modal {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 1000;
+            }
+
+            .modal-content {
+                background: white;
+                border-radius: 12px;
+                padding: 2rem;
+                margin: 5% auto;
+                max-width: 600px;
+                max-height: 80vh;
+                overflow-y: auto;
+            }
+
+            .form-group {
+                margin-bottom: 1rem;
+            }
+
+            .form-group label {
+                display: block;
+                margin-bottom: 0.5rem;
+                font-weight: 500;
+                color: #333;
+            }
+
+            .form-group input,
+            .form-group select,
+            .form-group textarea {
+                width: 100%;
+                padding: 0.75rem;
+                border: 1px solid #ddd;
+                border-radius: 6px;
+                font-size: 1rem;
+                box-sizing: border-box;
+            }
+
+            .form-group textarea {
+                min-height: 100px;
+                resize: vertical;
+            }
+
+            .form-actions {
+                display: flex;
+                gap: 1rem;
+                justify-content: flex-end;
+                margin-top: 2rem;
+            }
+
+            .btn-secondary {
+                background: #6c757d;
+                color: white;
+            }
+
+            .close-modal {
+                float: right;
+                font-size: 1.5rem;
+                cursor: pointer;
+                color: #666;
+            }
+
+            .close-modal:hover {
+                color: #333;
+            }
+
+            @media (max-width: 768px) {
+                .sessions-grid {
+                    grid-template-columns: 1fr;
+                }
+
+                .actions-bar {
+                    flex-direction: column;
+                    align-items: stretch;
+                }
+
+                .filters {
+                    justify-content: space-between;
+                }
+
+                .session-meta {
+                    flex-direction: column;
+                    gap: 0.5rem;
+                }
+
+                .session-footer {
+                    flex-direction: column;
+                    gap: 0.5rem;
+                    align-items: flex-start;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="learning-container">
+            <div class="header-section">
+                <h1>📚 Learning Exchange</h1>
+                <p>
+                    Share knowledge, learn new skills, and grow together with
+                    your community
+                </p>
+            </div>
+
+            <div class="actions-bar">
+                <button id="createSessionBtn" class="btn btn-primary">
+                    ➕ Create Learning Session
+                </button>
+
+                <div class="filters">
+                    <select id="filterType">
+                        <option value="">All Types</option>
+                        <option value="teach">Teaching</option>
+                        <option value="learn">Looking to Learn</option>
+                        <option value="exchange">Skill Exchange</option>
+                    </select>
+
+                    <select id="filterLevel">
+                        <option value="">All Levels</option>
+                        <option value="beginner">Beginner</option>
+                        <option value="intermediate">Intermediate</option>
+                        <option value="advanced">Advanced</option>
+                        <option value="all">All Levels</option>
+                    </select>
+
+                    <input
+                        type="text"
+                        id="filterSubject"
+                        placeholder="Search subjects..."
+                        style="min-width: 200px"
+                    />
+                </div>
+            </div>
+
+            <div id="sessionsGrid" class="sessions-grid">
+                <!-- Sessions will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Create Session Modal -->
+        <div id="createModal" class="modal">
+            <div class="modal-content">
+                <span class="close-modal" id="closeModal">&times;</span>
+                <h2>Create Learning Session</h2>
+
+                <form id="sessionForm">
+                    <div class="form-group">
+                        <label for="sessionTitle">Title *</label>
+                        <input
+                            type="text"
+                            id="sessionTitle"
+                            name="title"
+                            required
+                            placeholder="e.g., JavaScript for Beginners"
+                        />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="sessionSubject">Subject *</label>
+                        <input
+                            type="text"
+                            id="sessionSubject"
+                            name="subject"
+                            required
+                            placeholder="e.g., Programming, Cooking, Photography"
+                        />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="sessionType">Session Type *</label>
+                        <select id="sessionType" name="sessionType" required>
+                            <option value="">Select type</option>
+                            <option value="teach">I want to teach</option>
+                            <option value="learn">I want to learn</option>
+                            <option value="exchange">Skill exchange</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="sessionLevel">Level *</label>
+                        <select id="sessionLevel" name="level" required>
+                            <option value="">Select level</option>
+                            <option value="beginner">Beginner</option>
+                            <option value="intermediate">Intermediate</option>
+                            <option value="advanced">Advanced</option>
+                            <option value="all">All levels welcome</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="sessionDescription">Description *</label>
+                        <textarea
+                            id="sessionDescription"
+                            name="description"
+                            required
+                            placeholder="Describe what you'll teach, what you want to learn, or what skills you'd like to exchange..."
+                        ></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="sessionLocation">Location *</label>
+                        <input
+                            type="text"
+                            id="sessionLocation"
+                            name="location"
+                            required
+                            placeholder="e.g., Community Center, Online, My place"
+                        />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="sessionContact"
+                            >Contact Information *</label
+                        >
+                        <input
+                            type="text"
+                            id="sessionContact"
+                            name="contactInfo"
+                            required
+                            placeholder="e.g., email@example.com, WhatsApp: +1234567890"
+                        />
+                    </div>
+
+                    <div class="form-actions">
+                        <button
+                            type="button"
+                            class="btn btn-secondary"
+                            id="cancelBtn"
+                        >
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            Create Session
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <script>
+            class LearningExchange {
+                constructor() {
+                    this.sessions = [];
+                    this.filteredSessions = [];
+                    this.init();
+                }
+
+                async init() {
+                    this.setupEventListeners();
+                    await this.loadSessions();
+                    this.checkAuthStatus();
+                }
+
+                setupEventListeners() {
+                    // Modal controls
+                    document
+                        .getElementById("createSessionBtn")
+                        .addEventListener("click", () => {
+                            this.openCreateModal();
+                        });
+
+                    document
+                        .getElementById("closeModal")
+                        .addEventListener("click", () => {
+                            this.closeCreateModal();
+                        });
+
+                    document
+                        .getElementById("cancelBtn")
+                        .addEventListener("click", () => {
+                            this.closeCreateModal();
+                        });
+
+                    // Form submission
+                    document
+                        .getElementById("sessionForm")
+                        .addEventListener("submit", (e) => {
+                            e.preventDefault();
+                            this.createSession();
+                        });
+
+                    // Filters
+                    document
+                        .getElementById("filterType")
+                        .addEventListener("change", () => {
+                            this.applyFilters();
+                        });
+
+                    document
+                        .getElementById("filterLevel")
+                        .addEventListener("change", () => {
+                            this.applyFilters();
+                        });
+
+                    document
+                        .getElementById("filterSubject")
+                        .addEventListener("input", () => {
+                            this.applyFilters();
+                        });
+
+                    // Close modal on outside click
+                    document
+                        .getElementById("createModal")
+                        .addEventListener("click", (e) => {
+                            if (e.target.id === "createModal") {
+                                this.closeCreateModal();
+                            }
+                        });
+                }
+
+                async makeAuthenticatedRequest(url, options = {}) {
+                    const token = localStorage.getItem("auth_token");
+                    const headers = {
+                        "Content-Type": "application/json",
+                        ...options.headers,
+                    };
+
+                    if (token) {
+                        headers["Authorization"] = `Bearer ${token}`;
+                    }
+
+                    const response = await fetch(url, { ...options, headers });
+
+                    if (response.status === 401 && token) {
+                        localStorage.removeItem("auth_token");
+                        this.checkAuthStatus();
+                    }
+
+                    return response;
+                }
+
+                checkAuthStatus() {
+                    const token = localStorage.getItem("auth_token");
+                    const createBtn =
+                        document.getElementById("createSessionBtn");
+
+                    if (!token) {
+                        createBtn.textContent = "🔒 Login to Create Session";
+                        createBtn.onclick = () =>
+                            (window.location.href = "/auth.html");
+                    } else {
+                        createBtn.textContent = "➕ Create Learning Session";
+                        createBtn.onclick = () => this.openCreateModal();
+                    }
+                }
+
+                async loadSessions() {
+                    try {
+                        const response = await this.makeAuthenticatedRequest(
+                            "/api/learning"
+                        );
+                        const data = await response.json();
+                        this.sessions = data.sessions || [];
+                        this.filteredSessions = [...this.sessions];
+                        this.renderSessions();
+                    } catch (error) {
+                        console.error("Error loading sessions:", error);
+                        this.renderError("Failed to load learning sessions");
+                    }
+                }
+
+                applyFilters() {
+                    const typeFilter =
+                        document.getElementById("filterType").value;
+                    const levelFilter =
+                        document.getElementById("filterLevel").value;
+                    const subjectFilter = document
+                        .getElementById("filterSubject")
+                        .value.toLowerCase();
+
+                    this.filteredSessions = this.sessions.filter((session) => {
+                        const matchesType =
+                            !typeFilter || session.session_type === typeFilter;
+                        const matchesLevel =
+                            !levelFilter || session.level === levelFilter;
+                        const matchesSubject =
+                            !subjectFilter ||
+                            session.subject
+                                .toLowerCase()
+                                .includes(subjectFilter) ||
+                            session.title.toLowerCase().includes(subjectFilter);
+
+                        return matchesType && matchesLevel && matchesSubject;
+                    });
+
+                    this.renderSessions();
+                }
+
+                renderSessions() {
+                    const container = document.getElementById("sessionsGrid");
+
+                    if (this.filteredSessions.length === 0) {
+                        container.innerHTML = `
+                            <div class="empty-state" style="grid-column: 1 / -1;">
+                                <h3>No learning sessions found</h3>
+                                <p>Try adjusting your filters or create the first session!</p>
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    container.innerHTML = this.filteredSessions
+                        .map((session) => this.renderSessionCard(session))
+                        .join("");
+                }
+
+                renderSessionCard(session) {
+                    const typeClass = `type-${session.session_type}`;
+                    const levelClass = `level-${session.level}`;
+                    const typeText = {
+                        teach: "Teaching",
+                        learn: "Learning",
+                        exchange: "Exchange",
+                    }[session.session_type];
+
+                    const levelText =
+                        session.level.charAt(0).toUpperCase() +
+                        session.level.slice(1);
+                    const timeAgo = this.getTimeAgo(session.created_at);
+
+                    return `
+                        <div class="session-card">
+                            <div class="session-header">
+                                <span class="session-type ${typeClass}">${typeText}</span>
+                                <span class="level-badge ${levelClass}">${levelText}</span>
+                            </div>
+                            
+                            <h3 class="session-title">${this.escapeHtml(
+                                session.title
+                            )}</h3>
+                            
+                            <div class="session-meta">
+                                <span>📚 ${this.escapeHtml(
+                                    session.subject
+                                )}</span>
+                                <span>📍 ${this.escapeHtml(
+                                    session.location
+                                )}</span>
+                            </div>
+                            
+                            <p class="session-description">${this.escapeHtml(
+                                session.description
+                            )}</p>
+                            
+                            <div class="contact-info">
+                                <strong>Contact:</strong> ${this.escapeHtml(
+                                    session.contact_info
+                                )}
+                            </div>
+                            
+                            <div class="session-footer">
+                                <span>By @${this.escapeHtml(
+                                    session.owner_username || "Anonymous"
+                                )}</span>
+                                <span>${timeAgo}</span>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                openCreateModal() {
+                    const token = localStorage.getItem("auth_token");
+                    if (!token) {
+                        window.location.href = "/auth.html";
+                        return;
+                    }
+
+                    document.getElementById("createModal").style.display =
+                        "block";
+                    document.body.style.overflow = "hidden";
+                }
+
+                closeCreateModal() {
+                    document.getElementById("createModal").style.display =
+                        "none";
+                    document.body.style.overflow = "auto";
+                    document.getElementById("sessionForm").reset();
+                }
+
+                async createSession() {
+                    const formData = new FormData(
+                        document.getElementById("sessionForm")
+                    );
+                    const sessionData = {
+                        title: formData.get("title"),
+                        subject: formData.get("subject"),
+                        sessionType: formData.get("sessionType"),
+                        level: formData.get("level"),
+                        description: formData.get("description"),
+                        location: formData.get("location"),
+                        contactInfo: formData.get("contactInfo"),
+                    };
+
+                    try {
+                        const response = await this.makeAuthenticatedRequest(
+                            "/api/learning",
+                            {
+                                method: "POST",
+                                body: JSON.stringify(sessionData),
+                            }
+                        );
+
+                        if (response.ok) {
+                            this.closeCreateModal();
+                            await this.loadSessions();
+                            this.showNotification(
+                                "Learning session created successfully!",
+                                "success"
+                            );
+                        } else {
+                            const error = await response.json();
+                            this.showNotification(
+                                error.message || "Failed to create session",
+                                "error"
+                            );
+                        }
+                    } catch (error) {
+                        console.error("Error creating session:", error);
+                        this.showNotification(
+                            "Network error. Please try again.",
+                            "error"
+                        );
+                    }
+                }
+
+                renderError(message) {
+                    const container = document.getElementById("sessionsGrid");
+                    container.innerHTML = `
+                        <div class="empty-state" style="grid-column: 1 / -1;">
+                            <h3>Error</h3>
+                            <p>${message}</p>
+                        </div>
+                    `;
+                }
+
+                showNotification(message, type = "info") {
+                    // Simple notification - you could enhance this with a proper notification system
+                    alert(message);
+                }
+
+                escapeHtml(text) {
+                    const div = document.createElement("div");
+                    div.textContent = text;
+                    return div.innerHTML;
+                }
+
+                getTimeAgo(dateString) {
+                    const date = new Date(dateString);
+                    const now = new Date();
+                    const diffMs = now - date;
+                    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+                    const diffDays = Math.floor(diffHours / 24);
+
+                    if (diffDays > 0) {
+                        return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
+                    } else if (diffHours > 0) {
+                        return `${diffHours} hour${
+                            diffHours > 1 ? "s" : ""
+                        } ago`;
+                    } else {
+                        return "Just now";
+                    }
+                }
+            }
+
+            // Initialize the learning exchange
+            document.addEventListener("DOMContentLoaded", () => {
+                new LearningExchange();
+            });
+        </script>
+        <script src="script.js"></script>
+    </body>
+</html>

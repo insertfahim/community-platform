@@ -7,7 +7,7 @@
             headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
-            window.location.href = "/";
+            window.location.href = "index.html";
             return;
         }
         // Clear invalid token
@@ -122,7 +122,7 @@ if (signInBtn) {
                 localStorage.setItem("auth_token", data.token);
                 localStorage.setItem("user_id", data.userId);
             }
-            window.location.href = "/";
+            window.location.href = "index.html";
         } catch (err) {
             console.error("Network error:", err);
             signinError.innerText = "❌ Network error. Please try again.";
@@ -154,7 +154,7 @@ if (demoBtn) {
                 localStorage.setItem("auth_token", data.token);
                 localStorage.setItem("user_id", data.userId);
             }
-            window.location.href = "/";
+            window.location.href = "index.html";
         } catch (err) {
             console.error("Demo login error:", err);
             if (signinError) signinError.innerText = "❌ Demo login error.";

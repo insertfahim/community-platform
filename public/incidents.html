@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Incident Reports - Community Platform</title>
+        <link rel="stylesheet" href="styles.css" />
+        <style>
+            .incidents-container {
+                max-width: 1200px;
+                margin: 1rem auto;
+                padding: 1rem;
+            }
+
+            .header-section {
+                background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+                color: white;
+                padding: 2rem;
+                border-radius: 12px;
+                margin-bottom: 2rem;
+                text-align: center;
+            }
+
+            .header-section h1 {
+                margin: 0 0 0.5rem 0;
+                font-size: 2.5rem;
+            }
+
+            .header-section p {
+                margin: 0;
+                opacity: 0.9;
+                font-size: 1.1rem;
+            }
+
+            .actions-bar {
+                display: flex;
+                gap: 1rem;
+                margin-bottom: 2rem;
+                flex-wrap: wrap;
+                align-items: center;
+            }
+
+            .btn {
+                padding: 0.5rem 1rem;
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
+                font-weight: 500;
+                text-decoration: none;
+                display: inline-block;
+                transition: all 0.2s;
+            }
+
+            .btn-danger {
+                background: #dc3545;
+                color: white;
+            }
+
+            .btn-danger:hover {
+                background: #c82333;
+                transform: translateY(-1px);
+            }
+
+            .filters {
+                display: flex;
+                gap: 0.5rem;
+                flex-wrap: wrap;
+                align-items: center;
+            }
+
+            .filters select,
+            .filters input {
+                padding: 0.4rem 0.6rem;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                font-size: 0.9rem;
+            }
+
+            .incidents-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+                gap: 1.5rem;
+                margin-top: 1rem;
+            }
+
+            .incident-card {
+                background: white;
+                border: 1px solid #e6e6e6;
+                border-radius: 12px;
+                padding: 1.5rem;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+                transition: all 0.2s;
+            }
+
+            .incident-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+            }
+
+            .incident-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                margin-bottom: 1rem;
+            }
+
+            .severity-badge {
+                padding: 0.25rem 0.75rem;
+                border-radius: 20px;
+                font-size: 0.8rem;
+                font-weight: 600;
+                text-transform: uppercase;
+            }
+
+            .severity-critical {
+                background: #ffebee;
+                color: #c62828;
+                border: 2px solid #c62828;
+            }
+
+            .severity-high {
+                background: #fff3e0;
+                color: #ef6c00;
+            }
+
+            .severity-medium {
+                background: #fff8e1;
+                color: #f57f17;
+            }
+
+            .severity-low {
+                background: #e8f5e8;
+                color: #2e7d32;
+            }
+
+            .status-badge {
+                padding: 0.25rem 0.75rem;
+                border-radius: 20px;
+                font-size: 0.8rem;
+                font-weight: 500;
+            }
+
+            .status-reported {
+                background: #e3f2fd;
+                color: #1976d2;
+            }
+
+            .status-investigating {
+                background: #fff3e0;
+                color: #f57c00;
+            }
+
+            .status-resolved {
+                background: #e8f5e8;
+                color: #388e3c;
+            }
+
+            .status-closed {
+                background: #f5f5f5;
+                color: #616161;
+            }
+
+            .category-badge {
+                padding: 0.2rem 0.5rem;
+                border-radius: 12px;
+                font-size: 0.75rem;
+                font-weight: 500;
+                background: #f8f9fa;
+                color: #495057;
+            }
+
+            .incident-title {
+                font-size: 1.25rem;
+                font-weight: 600;
+                margin: 0.5rem 0;
+                color: #333;
+            }
+
+            .incident-meta {
+                display: flex;
+                gap: 1rem;
+                margin: 0.75rem 0;
+                font-size: 0.9rem;
+                color: #666;
+                flex-wrap: wrap;
+            }
+
+            .incident-meta span {
+                display: flex;
+                align-items: center;
+                gap: 0.25rem;
+            }
+
+            .incident-description {
+                color: #555;
+                line-height: 1.5;
+                margin: 1rem 0;
+            }
+
+            .incident-footer {
+                border-top: 1px solid #f0f0f0;
+                padding-top: 1rem;
+                margin-top: 1rem;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                font-size: 0.9rem;
+                color: #666;
+            }
+
+            .contact-info {
+                background: #f8f9fa;
+                padding: 0.5rem;
+                border-radius: 4px;
+                font-size: 0.85rem;
+                margin-top: 0.5rem;
+            }
+
+            .empty-state {
+                text-align: center;
+                padding: 3rem;
+                color: #666;
+                grid-column: 1 / -1;
+            }
+
+            .modal {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 1000;
+            }
+
+            .modal-content {
+                background: white;
+                border-radius: 12px;
+                padding: 2rem;
+                margin: 5% auto;
+                max-width: 600px;
+                max-height: 80vh;
+                overflow-y: auto;
+            }
+
+            .form-group {
+                margin-bottom: 1rem;
+            }
+
+            .form-group label {
+                display: block;
+                margin-bottom: 0.5rem;
+                font-weight: 500;
+                color: #333;
+            }
+
+            .form-group input,
+            .form-group select,
+            .form-group textarea {
+                width: 100%;
+                padding: 0.75rem;
+                border: 1px solid #ddd;
+                border-radius: 6px;
+                font-size: 1rem;
+                box-sizing: border-box;
+            }
+
+            .form-group textarea {
+                min-height: 100px;
+                resize: vertical;
+            }
+
+            .form-actions {
+                display: flex;
+                gap: 1rem;
+                justify-content: flex-end;
+                margin-top: 2rem;
+            }
+
+            .btn-secondary {
+                background: #6c757d;
+                color: white;
+            }
+
+            .close-modal {
+                float: right;
+                font-size: 1.5rem;
+                cursor: pointer;
+                color: #666;
+            }
+
+            .close-modal:hover {
+                color: #333;
+            }
+
+            .critical-alert {
+                background: #ffebee;
+                border: 2px solid #c62828;
+                color: #c62828;
+                padding: 1rem;
+                border-radius: 8px;
+                margin-bottom: 1rem;
+                text-align: center;
+                font-weight: 500;
+            }
+
+            @media (max-width: 768px) {
+                .incidents-grid {
+                    grid-template-columns: 1fr;
+                }
+
+                .actions-bar {
+                    flex-direction: column;
+                    align-items: stretch;
+                }
+
+                .filters {
+                    justify-content: space-between;
+                }
+
+                .incident-meta {
+                    flex-direction: column;
+                    gap: 0.5rem;
+                }
+
+                .incident-footer {
+                    flex-direction: column;
+                    gap: 0.5rem;
+                    align-items: flex-start;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="incidents-container">
+            <div class="header-section">
+                <h1>🚨 Incident Reports</h1>
+                <p>
+                    Report and track community incidents, safety concerns, and
+                    infrastructure issues
+                </p>
+            </div>
+
+            <div
+                id="criticalAlert"
+                class="critical-alert"
+                style="display: none"
+            >
+                ⚠️ There are critical incidents that require immediate
+                attention!
+            </div>
+
+            <div class="actions-bar">
+                <button id="reportIncidentBtn" class="btn btn-danger">
+                    📝 Report Incident
+                </button>
+
+                <div class="filters">
+                    <select id="filterCategory">
+                        <option value="">All Categories</option>
+                        <option value="safety">Safety</option>
+                        <option value="traffic">Traffic</option>
+                        <option value="infrastructure">Infrastructure</option>
+                        <option value="environment">Environment</option>
+                        <option value="crime">Crime</option>
+                        <option value="medical">Medical</option>
+                        <option value="other">Other</option>
+                    </select>
+
+                    <select id="filterSeverity">
+                        <option value="">All Severities</option>
+                        <option value="critical">Critical</option>
+                        <option value="high">High</option>
+                        <option value="medium">Medium</option>
+                        <option value="low">Low</option>
+                    </select>
+
+                    <select id="filterStatus">
+                        <option value="">All Statuses</option>
+                        <option value="reported">Reported</option>
+                        <option value="investigating">Investigating</option>
+                        <option value="resolved">Resolved</option>
+                        <option value="closed">Closed</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="incidentsGrid" class="incidents-grid">
+                <!-- Incidents will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Report Incident Modal -->
+        <div id="reportModal" class="modal">
+            <div class="modal-content">
+                <span class="close-modal" id="closeModal">&times;</span>
+                <h2>Report Incident</h2>
+
+                <form id="incidentForm">
+                    <div class="form-group">
+                        <label for="incidentTitle">Title *</label>
+                        <input
+                            type="text"
+                            id="incidentTitle"
+                            name="title"
+                            required
+                            placeholder="Brief description of the incident"
+                        />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="incidentCategory">Category *</label>
+                        <select id="incidentCategory" name="category" required>
+                            <option value="">Select category</option>
+                            <option value="safety">Safety Concern</option>
+                            <option value="traffic">Traffic Issue</option>
+                            <option value="infrastructure">
+                                Infrastructure Problem
+                            </option>
+                            <option value="environment">
+                                Environmental Issue
+                            </option>
+                            <option value="crime">Crime/Security</option>
+                            <option value="medical">Medical Emergency</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="incidentSeverity">Severity *</label>
+                        <select id="incidentSeverity" name="severity" required>
+                            <option value="">Select severity</option>
+                            <option value="critical">
+                                Critical - Immediate danger
+                            </option>
+                            <option value="high">
+                                High - Urgent attention needed
+                            </option>
+                            <option value="medium">
+                                Medium - Should be addressed soon
+                            </option>
+                            <option value="low">Low - Minor issue</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="incidentLocation">Location *</label>
+                        <input
+                            type="text"
+                            id="incidentLocation"
+                            name="location"
+                            required
+                            placeholder="Where did this incident occur?"
+                        />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="incidentDescription">Description *</label>
+                        <textarea
+                            id="incidentDescription"
+                            name="description"
+                            required
+                            placeholder="Provide detailed information about the incident..."
+                        ></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="incidentContact"
+                            >Contact Information (Optional)</label
+                        >
+                        <input
+                            type="text"
+                            id="incidentContact"
+                            name="contactInfo"
+                            placeholder="Your contact information for follow-up"
+                        />
+                    </div>
+
+                    <div class="form-actions">
+                        <button
+                            type="button"
+                            class="btn btn-secondary"
+                            id="cancelBtn"
+                        >
+                            Cancel
+                        </button>
+                        <button type="submit" class="btn btn-danger">
+                            Report Incident
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <script>
+            class IncidentReporting {
+                constructor() {
+                    this.incidents = [];
+                    this.filteredIncidents = [];
+                    this.init();
+                }
+
+                async init() {
+                    this.setupEventListeners();
+                    await this.loadIncidents();
+                }
+
+                setupEventListeners() {
+                    // Modal controls
+                    document
+                        .getElementById("reportIncidentBtn")
+                        .addEventListener("click", () => {
+                            this.openReportModal();
+                        });
+
+                    document
+                        .getElementById("closeModal")
+                        .addEventListener("click", () => {
+                            this.closeReportModal();
+                        });
+
+                    document
+                        .getElementById("cancelBtn")
+                        .addEventListener("click", () => {
+                            this.closeReportModal();
+                        });
+
+                    // Form submission
+                    document
+                        .getElementById("incidentForm")
+                        .addEventListener("submit", (e) => {
+                            e.preventDefault();
+                            this.reportIncident();
+                        });
+
+                    // Filters
+                    document
+                        .getElementById("filterCategory")
+                        .addEventListener("change", () => {
+                            this.applyFilters();
+                        });
+
+                    document
+                        .getElementById("filterSeverity")
+                        .addEventListener("change", () => {
+                            this.applyFilters();
+                        });
+
+                    document
+                        .getElementById("filterStatus")
+                        .addEventListener("change", () => {
+                            this.applyFilters();
+                        });
+
+                    // Close modal on outside click
+                    document
+                        .getElementById("reportModal")
+                        .addEventListener("click", (e) => {
+                            if (e.target.id === "reportModal") {
+                                this.closeReportModal();
+                            }
+                        });
+                }
+
+                async makeRequest(url, options = {}) {
+                    const token = localStorage.getItem("auth_token");
+                    const headers = {
+                        "Content-Type": "application/json",
+                        ...options.headers,
+                    };
+
+                    if (token) {
+                        headers["Authorization"] = `Bearer ${token}`;
+                    }
+
+                    return await fetch(url, { ...options, headers });
+                }
+
+                async loadIncidents() {
+                    try {
+                        const response = await this.makeRequest(
+                            "/api/incidents"
+                        );
+                        const data = await response.json();
+                        this.incidents = data.incidents || [];
+                        this.filteredIncidents = [...this.incidents];
+                        this.renderIncidents();
+                        this.checkCriticalIncidents();
+                    } catch (error) {
+                        console.error("Error loading incidents:", error);
+                        this.renderError("Failed to load incidents");
+                    }
+                }
+
+                checkCriticalIncidents() {
+                    const criticalIncidents = this.incidents.filter(
+                        (incident) =>
+                            incident.severity === "critical" &&
+                            ["reported", "investigating"].includes(
+                                incident.status
+                            )
+                    );
+
+                    const alertEl = document.getElementById("criticalAlert");
+                    if (criticalIncidents.length > 0) {
+                        alertEl.style.display = "block";
+                        alertEl.textContent = `⚠️ There are ${criticalIncidents.length} critical incident(s) that require immediate attention!`;
+                    } else {
+                        alertEl.style.display = "none";
+                    }
+                }
+
+                applyFilters() {
+                    const categoryFilter =
+                        document.getElementById("filterCategory").value;
+                    const severityFilter =
+                        document.getElementById("filterSeverity").value;
+                    const statusFilter =
+                        document.getElementById("filterStatus").value;
+
+                    this.filteredIncidents = this.incidents.filter(
+                        (incident) => {
+                            const matchesCategory =
+                                !categoryFilter ||
+                                incident.category === categoryFilter;
+                            const matchesSeverity =
+                                !severityFilter ||
+                                incident.severity === severityFilter;
+                            const matchesStatus =
+                                !statusFilter ||
+                                incident.status === statusFilter;
+
+                            return (
+                                matchesCategory &&
+                                matchesSeverity &&
+                                matchesStatus
+                            );
+                        }
+                    );
+
+                    this.renderIncidents();
+                }
+
+                renderIncidents() {
+                    const container = document.getElementById("incidentsGrid");
+
+                    if (this.filteredIncidents.length === 0) {
+                        container.innerHTML = `
+                            <div class="empty-state">
+                                <h3>No incidents found</h3>
+                                <p>Try adjusting your filters or be the first to report an incident.</p>
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    container.innerHTML = this.filteredIncidents
+                        .map((incident) => this.renderIncidentCard(incident))
+                        .join("");
+                }
+
+                renderIncidentCard(incident) {
+                    const severityClass = `severity-${incident.severity}`;
+                    const statusClass = `status-${incident.status}`;
+                    const timeAgo = this.getTimeAgo(incident.created_at);
+
+                    const statusText = {
+                        reported: "Reported",
+                        investigating: "Investigating",
+                        resolved: "Resolved",
+                        closed: "Closed",
+                    }[incident.status];
+
+                    const categoryText =
+                        incident.category.charAt(0).toUpperCase() +
+                        incident.category.slice(1);
+                    const severityText =
+                        incident.severity.charAt(0).toUpperCase() +
+                        incident.severity.slice(1);
+
+                    return `
+                        <div class="incident-card">
+                            <div class="incident-header">
+                                <span class="severity-badge ${severityClass}">${severityText}</span>
+                                <span class="status-badge ${statusClass}">${statusText}</span>
+                            </div>
+                            
+                            <h3 class="incident-title">${this.escapeHtml(
+                                incident.title
+                            )}</h3>
+                            
+                            <div class="incident-meta">
+                                <span class="category-badge">${categoryText}</span>
+                                <span>📍 ${this.escapeHtml(
+                                    incident.location
+                                )}</span>
+                            </div>
+                            
+                            <p class="incident-description">${this.escapeHtml(
+                                incident.description
+                            )}</p>
+                            
+                            ${
+                                incident.contact_info
+                                    ? `
+                                <div class="contact-info">
+                                    <strong>Contact:</strong> ${this.escapeHtml(
+                                        incident.contact_info
+                                    )}
+                                </div>
+                            `
+                                    : ""
+                            }
+                            
+                            ${
+                                incident.resolution_notes
+                                    ? `
+                                <div class="contact-info">
+                                    <strong>Resolution:</strong> ${this.escapeHtml(
+                                        incident.resolution_notes
+                                    )}
+                                </div>
+                            `
+                                    : ""
+                            }
+                            
+                            <div class="incident-footer">
+                                <span>Reported by ${this.escapeHtml(
+                                    incident.reporter_username || "Anonymous"
+                                )}</span>
+                                <span>${timeAgo}</span>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                openReportModal() {
+                    document.getElementById("reportModal").style.display =
+                        "block";
+                    document.body.style.overflow = "hidden";
+                }
+
+                closeReportModal() {
+                    document.getElementById("reportModal").style.display =
+                        "none";
+                    document.body.style.overflow = "auto";
+                    document.getElementById("incidentForm").reset();
+                }
+
+                async reportIncident() {
+                    const formData = new FormData(
+                        document.getElementById("incidentForm")
+                    );
+                    const incidentData = {
+                        title: formData.get("title"),
+                        category: formData.get("category"),
+                        severity: formData.get("severity"),
+                        location: formData.get("location"),
+                        description: formData.get("description"),
+                        contactInfo: formData.get("contactInfo"),
+                    };
+
+                    try {
+                        const response = await this.makeRequest(
+                            "/api/incidents",
+                            {
+                                method: "POST",
+                                body: JSON.stringify(incidentData),
+                            }
+                        );
+
+                        if (response.ok) {
+                            this.closeReportModal();
+                            await this.loadIncidents();
+                            this.showNotification(
+                                "Incident reported successfully!",
+                                "success"
+                            );
+                        } else {
+                            const error = await response.json();
+                            this.showNotification(
+                                error.message || "Failed to report incident",
+                                "error"
+                            );
+                        }
+                    } catch (error) {
+                        console.error("Error reporting incident:", error);
+                        this.showNotification(
+                            "Network error. Please try again.",
+                            "error"
+                        );
+                    }
+                }
+
+                renderError(message) {
+                    const container = document.getElementById("incidentsGrid");
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <h3>Error</h3>
+                            <p>${message}</p>
+                        </div>
+                    `;
+                }
+
+                showNotification(message, type = "info") {
+                    // Simple notification - you could enhance this with a proper notification system
+                    alert(message);
+                }
+
+                escapeHtml(text) {
+                    const div = document.createElement("div");
+                    div.textContent = text;
+                    return div.innerHTML;
+                }
+
+                getTimeAgo(dateString) {
+                    const date = new Date(dateString);
+                    const now = new Date();
+                    const diffMs = now - date;
+                    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+                    const diffDays = Math.floor(diffHours / 24);
+
+                    if (diffDays > 0) {
+                        return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
+                    } else if (diffHours > 0) {
+                        return `${diffHours} hour${
+                            diffHours > 1 ? "s" : ""
+                        } ago`;
+                    } else {
+                        return "Just now";
+                    }
+                }
+            }
+
+            // Initialize the incident reporting system
+            document.addEventListener("DOMContentLoaded", () => {
+                new IncidentReporting();
+            });
+        </script>
+        <script src="script.js"></script>
+    </body>
+</html>

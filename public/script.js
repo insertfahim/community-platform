@@ -44,20 +44,24 @@ document.addEventListener("DOMContentLoaded", function () {
     header.className = "site-header";
     header.innerHTML = `
       <div class="site-container">
-        <a href="/" class="site-brand">🏘️ Community</a>
+        <a href="index.html" class="site-brand">🏘️ Community</a>
         <button id="site-menu-btn" class="site-menu-btn" aria-label="Toggle navigation">☰</button>
         <ul id="site-nav-links" class="site-nav-links">
-          <li><a href="/">Home</a></li>
-          <li><a href="/feed.html">Feed</a></li>
-          <li data-requires-auth><a href="/post.html">Post Help</a></li>
-          <li><a href="/calendar.html">Calendar</a></li>
-          <li><a href="/donations.html">Donations</a></li>
-          <li><a href="/volunteers.html">Volunteers</a></li>
-          <li><a href="/emergency.html">Emergency</a></li>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="feed.html">Feed</a></li>
+          <li data-requires-auth><a href="post.html">Post Help</a></li>
+          <li data-requires-auth><a href="messages.html">Messages</a></li>
+          <li><a href="calendar.html">Calendar</a></li>
+          <li><a href="donations.html">Donations</a></li>
+          <li><a href="volunteers.html">Volunteers</a></li>
+          <li><a href="learning.html">Learning</a></li>
+          <li><a href="incidents.html">Incidents</a></li>
+          <li><a href="emergency.html">Emergency</a></li>
+          <li data-requires-auth><a href="history.html">History</a></li>
           <li data-requires-admin style="display:none">
-            <a href="/admin.html" style="background: rgba(255, 255, 255, 0.15); color: #fbbf24; padding: 8px 16px; border-radius: 6px;">🛡️ Dashboard</a>
+            <a href="admin.html" style="background: rgba(255, 255, 255, 0.15); color: #fbbf24; padding: 8px 16px; border-radius: 6px;">🛡️ Dashboard</a>
           </li>
-          <li data-auth-link><a href="/auth.html">Sign Up / Login</a></li>
+          <li data-auth-link><a href="auth.html">Sign Up / Login</a></li>
           <li data-logout-link style="display:none"><a href="#" id="site-logout">Logout</a></li>
         </ul>
       </div>
@@ -108,7 +112,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         e.preventDefault();
                         localStorage.removeItem("auth_token");
                         localStorage.removeItem("user_id");
-                        window.location.href = "/auth.html";
+                        window.location.href = "auth.html";
                     };
                 }
 
@@ -168,27 +172,21 @@ document.addEventListener("DOMContentLoaded", function () {
             }
             // Page-level guardrails
             const path = window.location.pathname;
-            const requiresAuthPages = new Set(["/calendar.html", "/post.html"]);
-            if (!token && requiresAuthPages.has(path)) {
-                window.location.replace("/auth.html");
-                return;
-            }
-            // Redirect disabled pages to home
-            const disabledPages = new Set([
-                "/messages.html",
-                "/learning.html",
-                "/incidents.html",
-                "/history.html",
+            const requiresAuthPages = new Set([
+                "/calendar.html",
+                "/post.html",
+                "calendar.html",
+                "post.html",
             ]);
-            if (disabledPages.has(path)) {
-                window.location.replace("/");
+            if (!token && requiresAuthPages.has(path)) {
+                window.location.replace("auth.html");
                 return;
             }
 
             // Admin page access control
-            if (path === "/admin.html") {
+            if (path === "/admin.html" || path === "admin.html") {
                 if (!token) {
-                    window.location.replace("/auth.html");
+                    window.location.replace("auth.html");
                     return;
                 }
                 // Additional admin role check is handled by admin.js

@@ -102,6 +102,57 @@ async function ensureSchema(sql) {
         );
     `;
 
+    // Messages
+    await sql`
+        create table if not exists messages (
+            id bigserial primary key,
+            sender_id bigint not null references users(id) on delete cascade,
+            recipient_id bigint not null references users(id) on delete cascade,
+            content text not null,
+            is_read boolean not null default false,
+            created_at timestamptz not null default now(),
+            updated_at timestamptz not null default now()
+        );
+    `;
+
+    // Learning sessions
+    await sql`
+        create table if not exists learning_sessions (
+            id bigserial primary key,
+            title text not null,
+            description text not null,
+            subject text not null,
+            level text not null check (level in ('beginner','intermediate','advanced','all')),
+            session_type text not null check (session_type in ('teach','learn','exchange')),
+            location text not null,
+            contact_info text not null,
+            owner_id bigint not null references users(id) on delete cascade,
+            status text not null default 'active' check (status in ('active','completed','cancelled')),
+            created_at timestamptz not null default now(),
+            updated_at timestamptz not null default now()
+        );
+    `;
+
+    // Incidents
+    await sql`
+        create table if not exists incidents (
+            id bigserial primary key,
+            title text not null,
+            description text not null,
+            category text not null check (category in ('safety','traffic','infrastructure','environment','crime','medical','other')),
+            severity text not null check (severity in ('low','medium','high','critical')),
+            location text not null,
+            status text not null default 'reported' check (status in ('reported','investigating','resolved','closed')),
+            reporter_id bigint references users(id) on delete set null,
+            contact_info text,
+            resolution_notes text,
+            resolved_by bigint references users(id) on delete set null,
+            resolved_at timestamptz,
+            created_at timestamptz not null default now(),
+            updated_at timestamptz not null default now()
+        );
+    `;
+
     // History logs
     await sql`
         create table if not exists history_logs (

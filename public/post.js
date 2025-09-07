@@ -2,7 +2,7 @@
 try {
     const token = localStorage.getItem("auth_token");
     if (!token) {
-        window.location.href = "/auth";
+        window.location.href = "auth.html";
     }
 } catch (_e) {
     /* no-op */

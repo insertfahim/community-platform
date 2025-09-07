@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Activity History - Community Platform</title>
+        <link rel="stylesheet" href="styles.css" />
+        <style>
+            .history-container {
+                max-width: 1000px;
+                margin: 1rem auto;
+                padding: 1rem;
+            }
+
+            .header-section {
+                background: linear-gradient(135deg, #6f42c1 0%, #5a2d91 100%);
+                color: white;
+                padding: 2rem;
+                border-radius: 12px;
+                margin-bottom: 2rem;
+                text-align: center;
+            }
+
+            .header-section h1 {
+                margin: 0 0 0.5rem 0;
+                font-size: 2.5rem;
+            }
+
+            .header-section p {
+                margin: 0;
+                opacity: 0.9;
+                font-size: 1.1rem;
+            }
+
+            .stats-section {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 1rem;
+                margin-bottom: 2rem;
+            }
+
+            .stat-card {
+                background: white;
+                border: 1px solid #e6e6e6;
+                border-radius: 8px;
+                padding: 1.5rem;
+                text-align: center;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+            }
+
+            .stat-number {
+                font-size: 2rem;
+                font-weight: bold;
+                color: #6f42c1;
+                margin-bottom: 0.5rem;
+            }
+
+            .stat-label {
+                color: #666;
+                font-size: 0.9rem;
+            }
+
+            .filters-section {
+                background: white;
+                border: 1px solid #e6e6e6;
+                border-radius: 8px;
+                padding: 1rem;
+                margin-bottom: 2rem;
+                display: flex;
+                gap: 1rem;
+                flex-wrap: wrap;
+                align-items: center;
+            }
+
+            .filters-section select,
+            .filters-section input {
+                padding: 0.5rem;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                font-size: 0.9rem;
+            }
+
+            .logs-section {
+                background: white;
+                border: 1px solid #e6e6e6;
+                border-radius: 8px;
+                padding: 1rem;
+            }
+
+            .log-item {
+                display: flex;
+                align-items: flex-start;
+                gap: 1rem;
+                padding: 1rem;
+                border-bottom: 1px solid #f0f0f0;
+                transition: background-color 0.2s;
+            }
+
+            .log-item:hover {
+                background: #f8f9fa;
+            }
+
+            .log-item:last-child {
+                border-bottom: none;
+            }
+
+            .log-icon {
+                flex-shrink: 0;
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.2rem;
+                color: white;
+                font-weight: bold;
+            }
+
+            .log-icon.post {
+                background: #007bff;
+            }
+            .log-icon.volunteer {
+                background: #28a745;
+            }
+            .log-icon.donation {
+                background: #ffc107;
+                color: #333;
+            }
+            .log-icon.event {
+                background: #17a2b8;
+            }
+            .log-icon.message {
+                background: #6f42c1;
+            }
+            .log-icon.incident {
+                background: #dc3545;
+            }
+            .log-icon.learning {
+                background: #fd7e14;
+            }
+            .log-icon.default {
+                background: #6c757d;
+            }
+
+            .log-content {
+                flex: 1;
+                min-width: 0;
+            }
+
+            .log-action {
+                font-weight: 600;
+                color: #333;
+                margin-bottom: 0.25rem;
+            }
+
+            .log-details {
+                color: #666;
+                font-size: 0.9rem;
+                margin-bottom: 0.5rem;
+                line-height: 1.4;
+            }
+
+            .log-meta {
+                font-size: 0.8rem;
+                color: #999;
+                display: flex;
+                gap: 1rem;
+                flex-wrap: wrap;
+            }
+
+            .log-time {
+                flex-shrink: 0;
+                font-size: 0.8rem;
+                color: #999;
+                white-space: nowrap;
+            }
+
+            .empty-state {
+                text-align: center;
+                padding: 3rem;
+                color: #666;
+            }
+
+            .load-more {
+                text-align: center;
+                margin-top: 2rem;
+            }
+
+            .btn {
+                padding: 0.5rem 1rem;
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
+                font-weight: 500;
+                text-decoration: none;
+                display: inline-block;
+                transition: all 0.2s;
+            }
+
+            .btn-primary {
+                background: #6f42c1;
+                color: white;
+            }
+
+            .btn-primary:hover {
+                background: #5a2d91;
+            }
+
+            .btn:disabled {
+                background: #ccc;
+                cursor: not-allowed;
+            }
+
+            .loading {
+                text-align: center;
+                padding: 2rem;
+                color: #666;
+            }
+
+            @media (max-width: 768px) {
+                .filters-section {
+                    flex-direction: column;
+                    align-items: stretch;
+                }
+
+                .log-item {
+                    flex-direction: column;
+                    gap: 0.5rem;
+                }
+
+                .log-time {
+                    align-self: flex-start;
+                }
+
+                .log-meta {
+                    margin-top: 0.5rem;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="history-container">
+            <div class="header-section">
+                <h1>📊 Activity History</h1>
+                <p>Track your community involvement and contributions</p>
+            </div>
+
+            <div id="statsSection" class="stats-section">
+                <!-- Stats will be loaded here -->
+            </div>
+
+            <div class="filters-section">
+                <label>
+                    <strong>Filter by Action:</strong>
+                    <select id="actionFilter">
+                        <option value="">All Actions</option>
+                        <option value="post">Posts</option>
+                        <option value="volunteer">Volunteer Activities</option>
+                        <option value="donation">Donations</option>
+                        <option value="event">Events</option>
+                        <option value="message">Messages</option>
+                        <option value="incident">Incidents</option>
+                        <option value="learning">Learning</option>
+                    </select>
+                </label>
+
+                <label>
+                    <strong>Time Period:</strong>
+                    <select id="timeFilter">
+                        <option value="">All Time</option>
+                        <option value="today">Today</option>
+                        <option value="week">This Week</option>
+                        <option value="month">This Month</option>
+                    </select>
+                </label>
+            </div>
+
+            <div class="logs-section">
+                <div id="logsContainer">
+                    <div class="loading">Loading your activity history...</div>
+                </div>
+
+                <div
+                    id="loadMoreSection"
+                    class="load-more"
+                    style="display: none"
+                >
+                    <button id="loadMoreBtn" class="btn btn-primary">
+                        Load More
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            class ActivityHistory {
+                constructor() {
+                    this.logs = [];
+                    this.filteredLogs = [];
+                    this.stats = {};
+                    this.currentOffset = 0;
+                    this.hasMore = true;
+                    this.isLoading = false;
+                    this.init();
+                }
+
+                async init() {
+                    await this.checkAuth();
+                    this.setupEventListeners();
+                    await this.loadStats();
+                    await this.loadLogs();
+                }
+
+                async checkAuth() {
+                    const token = localStorage.getItem("auth_token");
+                    if (!token) {
+                        window.location.href = "/auth.html";
+                        return;
+                    }
+
+                    try {
+                        const response = await fetch("/api/users/me", {
+                            headers: { Authorization: `Bearer ${token}` },
+                        });
+
+                        if (!response.ok) {
+                            localStorage.removeItem("auth_token");
+                            window.location.href = "/auth.html";
+                        }
+                    } catch (error) {
+                        console.error("Auth check failed:", error);
+                        window.location.href = "/auth.html";
+                    }
+                }
+
+                setupEventListeners() {
+                    document
+                        .getElementById("actionFilter")
+                        .addEventListener("change", () => {
+                            this.applyFilters();
+                        });
+
+                    document
+                        .getElementById("timeFilter")
+                        .addEventListener("change", () => {
+                            this.applyFilters();
+                        });
+
+                    document
+                        .getElementById("loadMoreBtn")
+                        .addEventListener("click", () => {
+                            this.loadMoreLogs();
+                        });
+                }
+
+                async makeAuthenticatedRequest(url, options = {}) {
+                    const token = localStorage.getItem("auth_token");
+                    const headers = {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                        ...options.headers,
+                    };
+
+                    return await fetch(url, { ...options, headers });
+                }
+
+                async loadStats() {
+                    try {
+                        const response = await this.makeAuthenticatedRequest(
+                            "/api/history/stats"
+                        );
+                        const data = await response.json();
+                        this.stats = data.stats || {};
+                        this.renderStats();
+                    } catch (error) {
+                        console.error("Error loading stats:", error);
+                    }
+                }
+
+                async loadLogs() {
+                    if (this.isLoading || !this.hasMore) return;
+
+                    this.isLoading = true;
+                    const loadMoreBtn = document.getElementById("loadMoreBtn");
+                    if (loadMoreBtn) loadMoreBtn.disabled = true;
+
+                    try {
+                        const response = await this.makeAuthenticatedRequest(
+                            `/api/history?limit=20&offset=${this.currentOffset}`
+                        );
+                        const data = await response.json();
+
+                        this.logs.push(...(data.logs || []));
+                        this.hasMore = data.hasMore;
+                        this.currentOffset += data.logs?.length || 0;
+
+                        this.applyFilters();
+
+                        const loadMoreSection =
+                            document.getElementById("loadMoreSection");
+                        loadMoreSection.style.display = this.hasMore
+                            ? "block"
+                            : "none";
+                    } catch (error) {
+                        console.error("Error loading logs:", error);
+                        this.renderError("Failed to load activity history");
+                    } finally {
+                        this.isLoading = false;
+                        if (loadMoreBtn) loadMoreBtn.disabled = false;
+                    }
+                }
+
+                async loadMoreLogs() {
+                    await this.loadLogs();
+                }
+
+                renderStats() {
+                    const container = document.getElementById("statsSection");
+
+                    const statsData = [
+                        {
+                            label: "Total Activities",
+                            value: this.stats.total || 0,
+                        },
+                        { label: "This Week", value: this.stats.thisWeek || 0 },
+                        {
+                            label: "This Month",
+                            value: this.stats.thisMonth || 0,
+                        },
+                        {
+                            label: "Activity Types",
+                            value: Object.keys(this.stats.actionTypes || {})
+                                .length,
+                        },
+                    ];
+
+                    container.innerHTML = statsData
+                        .map(
+                            (stat) => `
+                        <div class="stat-card">
+                            <div class="stat-number">${stat.value}</div>
+                            <div class="stat-label">${stat.label}</div>
+                        </div>
+                    `
+                        )
+                        .join("");
+                }
+
+                applyFilters() {
+                    const actionFilter =
+                        document.getElementById("actionFilter").value;
+                    const timeFilter =
+                        document.getElementById("timeFilter").value;
+
+                    this.filteredLogs = this.logs.filter((log) => {
+                        // Action filter
+                        if (actionFilter) {
+                            const actionMatch = log.action
+                                .toLowerCase()
+                                .includes(actionFilter.toLowerCase());
+                            if (!actionMatch) return false;
+                        }
+
+                        // Time filter
+                        if (timeFilter) {
+                            const logDate = new Date(log.created_at);
+                            const now = new Date();
+
+                            switch (timeFilter) {
+                                case "today":
+                                    const today = new Date(
+                                        now.getFullYear(),
+                                        now.getMonth(),
+                                        now.getDate()
+                                    );
+                                    if (logDate < today) return false;
+                                    break;
+                                case "week":
+                                    const weekAgo = new Date(now);
+                                    weekAgo.setDate(weekAgo.getDate() - 7);
+                                    if (logDate < weekAgo) return false;
+                                    break;
+                                case "month":
+                                    const monthAgo = new Date(now);
+                                    monthAgo.setMonth(monthAgo.getMonth() - 1);
+                                    if (logDate < monthAgo) return false;
+                                    break;
+                            }
+                        }
+
+                        return true;
+                    });
+
+                    this.renderLogs();
+                }
+
+                renderLogs() {
+                    const container = document.getElementById("logsContainer");
+
+                    if (this.filteredLogs.length === 0) {
+                        container.innerHTML = `
+                            <div class="empty-state">
+                                <h3>No activity found</h3>
+                                <p>Try adjusting your filters or start participating in the community!</p>
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    container.innerHTML = this.filteredLogs
+                        .map((log) => this.renderLogItem(log))
+                        .join("");
+                }
+
+                renderLogItem(log) {
+                    const icon = this.getActionIcon(log.action);
+                    const { title, description } = this.getActionText(log);
+                    const timeAgo = this.getTimeAgo(log.created_at);
+
+                    return `
+                        <div class="log-item">
+                            <div class="log-icon ${icon.class}">
+                                ${icon.symbol}
+                            </div>
+                            <div class="log-content">
+                                <div class="log-action">${title}</div>
+                                <div class="log-details">${description}</div>
+                                <div class="log-meta">
+                                    <span>Action: ${log.action}</span>
+                                    ${
+                                        log.meta
+                                            ? `<span>Details: ${this.formatMeta(
+                                                  log.meta
+                                              )}</span>`
+                                            : ""
+                                    }
+                                </div>
+                            </div>
+                            <div class="log-time">${timeAgo}</div>
+                        </div>
+                    `;
+                }
+
+                getActionIcon(action) {
+                    const iconMap = {
+                        post: { symbol: "📝", class: "post" },
+                        volunteer: { symbol: "🤝", class: "volunteer" },
+                        donation: { symbol: "🎁", class: "donation" },
+                        event: { symbol: "📅", class: "event" },
+                        message: { symbol: "💬", class: "message" },
+                        incident: { symbol: "🚨", class: "incident" },
+                        learning: { symbol: "📚", class: "learning" },
+                    };
+
+                    // Find matching icon based on action keywords
+                    for (const [key, icon] of Object.entries(iconMap)) {
+                        if (action.toLowerCase().includes(key)) {
+                            return icon;
+                        }
+                    }
+
+                    return { symbol: "📋", class: "default" };
+                }
+
+                getActionText(log) {
+                    const action = log.action;
+                    const meta = log.meta || {};
+
+                    // Define action text mapping
+                    const actionMap = {
+                        post_created: {
+                            title: "Created a new post",
+                            description: `Posted "${
+                                meta.title || "Untitled"
+                            }" in ${meta.category || "general"} category`,
+                        },
+                        volunteer_requested: {
+                            title: "Applied to become a volunteer",
+                            description:
+                                "Submitted volunteer application for review",
+                        },
+                        volunteer_approved: {
+                            title: "Volunteer application approved",
+                            description: "You are now a verified volunteer",
+                        },
+                        donation_created: {
+                            title: "Added a donation item",
+                            description: `Listed ${
+                                meta.kind || "item"
+                            } for donation`,
+                        },
+                        event_created: {
+                            title: "Created a new event",
+                            description: `Scheduled event: ${
+                                meta.title || "Untitled Event"
+                            }`,
+                        },
+                        message_sent: {
+                            title: "Sent a message",
+                            description:
+                                "Sent a private message to another user",
+                        },
+                        incident_reported: {
+                            title: "Reported an incident",
+                            description: `${
+                                meta.severity || "Medium"
+                            } severity ${
+                                meta.category || "general"
+                            } incident: ${meta.title || "Untitled"}`,
+                        },
+                        learning_session_created: {
+                            title: "Created learning session",
+                            description: `${
+                                meta.sessionType || "Session"
+                            } for ${meta.subject || "subject"}: ${
+                                meta.title || "Untitled"
+                            }`,
+                        },
+                    };
+
+                    return (
+                        actionMap[action] || {
+                            title: this.formatActionName(action),
+                            description: "Community activity",
+                        }
+                    );
+                }
+
+                formatActionName(action) {
+                    return action
+                        .split("_")
+                        .map(
+                            (word) =>
+                                word.charAt(0).toUpperCase() + word.slice(1)
+                        )
+                        .join(" ");
+                }
+
+                formatMeta(meta) {
+                    if (!meta || typeof meta !== "object") return "";
+
+                    const relevantKeys = [
+                        "title",
+                        "category",
+                        "type",
+                        "subject",
+                        "severity",
+                    ];
+                    const parts = [];
+
+                    for (const key of relevantKeys) {
+                        if (meta[key]) {
+                            parts.push(`${key}: ${meta[key]}`);
+                        }
+                    }
+
+                    return parts.slice(0, 2).join(", ");
+                }
+
+                renderError(message) {
+                    const container = document.getElementById("logsContainer");
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <h3>Error</h3>
+                            <p>${message}</p>
+                        </div>
+                    `;
+                }
+
+                getTimeAgo(dateString) {
+                    const date = new Date(dateString);
+                    const now = new Date();
+                    const diffMs = now - date;
+                    const diffMins = Math.floor(diffMs / (1000 * 60));
+                    const diffHours = Math.floor(diffMins / 60);
+                    const diffDays = Math.floor(diffHours / 24);
+
+                    if (diffMins < 60) {
+                        return diffMins <= 1
+                            ? "Just now"
+                            : `${diffMins} min ago`;
+                    } else if (diffHours < 24) {
+                        return `${diffHours}h ago`;
+                    } else if (diffDays < 7) {
+                        return `${diffDays}d ago`;
+                    } else {
+                        return date.toLocaleDateString();
+                    }
+                }
+            }
+
+            // Initialize the activity history
+            document.addEventListener("DOMContentLoaded", () => {
+                new ActivityHistory();
+            });
+        </script>
+        <script src="script.js"></script>
+    </body>
+</html>

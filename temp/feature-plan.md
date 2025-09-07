@@ -2,7 +2,7 @@
 
 ### 1) Overview of current state
 
--   Stack: Node.js + Express, MongoDB via Mongoose
+-   Stack: Node.js + Express, PostgreSQL via Neon DB
 -   Implemented: Auth (token), Posts, Donations, Incidents, Learning, Messages, Events, Emergency contacts, Volunteers, Admin
 -   Gaps vs guide: No distance scoring, limited verification signals, no categories table, no smart feed ranking, no real-time notifications
 

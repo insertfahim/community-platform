@@ -299,6 +299,10 @@ input:focus {
 .demo-cta {
     margin-top: 16px;
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 .demo-subtitle {
     font-size: 12px;
@@ -311,7 +315,8 @@ input:focus {
     height: 40px;
     border-radius: 12px;
     font-weight: 600;
-    margin: 2px;
+    margin: 4px auto;
+    display: block;
 }
 .demo-btn:hover {
     filter: brightness(1.05);
