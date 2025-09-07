@@ -48,34 +48,59 @@ const listIncidents = async (filters = {}) => {
             ? `where ${whereConditions.join(" and ")}`
             : "";
 
-    const query = `
-        select 
-            i.*,
-            reporter.name as reporter_name,
-            reporter.username as reporter_username,
-            resolver.name as resolved_by_name,
-            resolver.username as resolved_by_username
-        from incidents i
-        left join users reporter on i.reporter_id = reporter.id
-        left join users resolver on i.resolved_by = resolver.id
-        ${whereClause}
-        order by 
-            case when i.status = 'reported' then 1 
-                 when i.status = 'investigating' then 2 
-                 else 3 end,
-            case when i.severity = 'critical' then 1
-                 when i.severity = 'high' then 2
-                 when i.severity = 'medium' then 3
-                 else 4 end,
-            i.created_at desc
-    `;
-
     if (params.length === 0) {
-        return await sql.unsafe(query);
+        if (whereConditions.length === 0) {
+            // No filters, simple query
+            const incidents = await sql`
+                select
+                    i.*,
+                    reporter.name as reporter_name,
+                    reporter.username as reporter_username,
+                    resolver.name as resolved_by_name,
+                    resolver.username as resolved_by_username
+                from incidents i
+                left join users reporter on i.reporter_id = reporter.id
+                left join users resolver on i.resolved_by = resolver.id
+                order by
+                    case when i.status = 'reported' then 1
+                         when i.status = 'investigating' then 2
+                         else 3 end,
+                    case when i.severity = 'critical' then 1
+                         when i.severity = 'high' then 2
+                         when i.severity = 'medium' then 3
+                         else 4 end,
+                    i.created_at desc
+            `;
+            return incidents;
+        } else {
+            // This shouldn't happen since params.length === 0 means no filters
+            return [];
+        }
+    } else {
+        // For queries with parameters, use unsafe with proper parameter substitution
+        const queryString = `
+            select
+                i.*,
+                reporter.name as reporter_name,
+                reporter.username as reporter_username,
+                resolver.name as resolved_by_name,
+                resolver.username as resolved_by_username
+            from incidents i
+            left join users reporter on i.reporter_id = reporter.id
+            left join users resolver on i.resolved_by = resolver.id
+            where ${whereConditions.join(" and ")}
+            order by
+                case when i.status = 'reported' then 1
+                     when i.status = 'investigating' then 2
+                     else 3 end,
+                case when i.severity = 'critical' then 1
+                     when i.severity = 'high' then 2
+                     when i.severity = 'medium' then 3
+                     else 4 end,
+                i.created_at desc
+        `;
+        return await sql.unsafe(queryString, params);
     }
-
-    const incidents = await sql.unsafe(query, params);
-    return incidents;
 };
 
 const updateIncident = async (incidentId, updates, userId = null) => {
