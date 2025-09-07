@@ -29,7 +29,18 @@ const listEvents = async (userId, filters = {}) => {
         order by start_at asc
     `;
     const rows = await sql(query, params);
-    return rows;
+    // Map database column names to JavaScript camelCase
+    return rows.map((row) => ({
+        id: row.id,
+        title: row.title,
+        description: row.description,
+        startAt: row.start_at,
+        endAt: row.end_at,
+        location: row.location,
+        ownerId: row.owner_id,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+    }));
 };
 
 const updateEvent = async (id, ownerId, updates) => {
