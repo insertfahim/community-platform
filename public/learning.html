@@ -564,12 +564,26 @@
 
                 async loadSessions() {
                     try {
+                        console.log("🔍 Frontend: Loading sessions...");
                         const response = await this.makeAuthenticatedRequest(
                             "/api/learning"
                         );
+                        console.log(
+                            "🔍 Frontend: Response status:",
+                            response.status
+                        );
                         const data = await response.json();
+                        console.log("🔍 Frontend: Response data:", data);
                         this.sessions = data.sessions || [];
+                        console.log(
+                            "🔍 Frontend: Sessions set:",
+                            this.sessions.length
+                        );
                         this.filteredSessions = [...this.sessions];
+                        console.log(
+                            "🔍 Frontend: Filtered sessions set:",
+                            this.filteredSessions.length
+                        );
                         this.renderSessions();
                     } catch (error) {
                         console.error("Error loading sessions:", error);

@@ -17,7 +17,11 @@ const getUserLogs = async (req, res) => {
         // Parse meta data for each log
         const formattedLogs = paginatedLogs.map((log) => ({
             ...log,
-            meta: log.meta ? JSON.parse(log.meta) : null,
+            meta: log.meta
+                ? typeof log.meta === "string"
+                    ? JSON.parse(log.meta)
+                    : log.meta
+                : null,
         }));
 
         res.json({

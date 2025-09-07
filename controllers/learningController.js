@@ -66,7 +66,16 @@ const create = async (req, res) => {
 
 const list = async (req, res) => {
     try {
+        console.log("🔍 DEBUG: List learning sessions called");
         const { subject, level, sessionType, status, ownerId } = req.query;
+        console.log("🔍 DEBUG: Query params:", {
+            subject,
+            level,
+            sessionType,
+            status,
+            ownerId,
+        });
+
         const sessions = await Learning.listLearningSessions({
             subject,
             level,
@@ -75,6 +84,7 @@ const list = async (req, res) => {
             ownerId,
         });
 
+        console.log("🔍 DEBUG: Retrieved sessions:", sessions);
         res.status(200).json({ sessions });
     } catch (error) {
         console.error("❌ List learning sessions error:", error);

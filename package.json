@@ -9,11 +9,12 @@
         "migrate": "node add-volunteer-status.js"
     },
     "dependencies": {
+        "@neondatabase/serverless": "^0.9.5",
         "body-parser": "^2.2.0",
         "cors": "^2.8.5",
         "dotenv": "^17.2.1",
         "express": "^5.1.0",
-        "@neondatabase/serverless": "^0.9.5"
+        "node-fetch": "^2.7.0"
     },
     "devDependencies": {
         "cross-env": "^7.0.3",

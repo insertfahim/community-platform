@@ -590,6 +590,20 @@
                                 meta.kind || "item"
                             } for donation`,
                         },
+                        donation_status_updated: {
+                            title: "Updated donation status",
+                            description: `Changed donation status to ${
+                                meta.status || "updated"
+                            }`,
+                        },
+                        donation_updated: {
+                            title: "Updated donation item",
+                            description: "Modified donation details",
+                        },
+                        donation_deleted: {
+                            title: "Removed donation item",
+                            description: "Deleted a donation listing",
+                        },
                         event_created: {
                             title: "Created a new event",
                             description: `Scheduled event: ${

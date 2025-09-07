@@ -20,59 +20,114 @@ const createLearningSession = async (sessionData) => {
 };
 
 const listLearningSessions = async (filters = {}) => {
+    console.log("🔍 DEBUG: listLearningSessions called with filters:", filters);
     const sql = getSql();
-    let whereConditions = [];
-    let params = [];
 
-    if (filters.subject) {
-        whereConditions.push(`subject ilike $${params.length + 1}`);
-        params.push(`%${filters.subject}%`);
+    try {
+        // Start with base query
+        let query = sql`
+            select 
+                ls.*,
+                u.name as owner_name,
+                u.username as owner_username
+            from learning_sessions ls
+            join users u on ls.owner_id = u.id
+        `;
+
+        // Apply filters dynamically
+        let conditions = [];
+
+        if (filters.subject) {
+            conditions.push(sql`subject ilike ${"%" + filters.subject + "%"}`);
+        }
+
+        if (filters.level) {
+            conditions.push(sql`level = ${filters.level}`);
+        }
+
+        if (filters.sessionType) {
+            conditions.push(sql`session_type = ${filters.sessionType}`);
+        }
+
+        if (filters.status) {
+            conditions.push(sql`status = ${filters.status}`);
+        }
+
+        if (filters.ownerId) {
+            conditions.push(sql`owner_id = ${filters.ownerId}`);
+        }
+
+        // If no filters, get all sessions
+        if (conditions.length === 0) {
+            const sessions = await sql`
+                select 
+                    ls.*,
+                    u.name as owner_name,
+                    u.username as owner_username
+                from learning_sessions ls
+                join users u on ls.owner_id = u.id
+                order by ls.created_at desc
+            `;
+            console.log(
+                "🔍 DEBUG: Retrieved sessions (no filters):",
+                sessions.length
+            );
+            return sessions;
+        }
+
+        // This is complex with postgres.js, so let's use a simple approach for now
+        // Just return all sessions and filter in memory if needed
+        const allSessions = await sql`
+            select 
+                ls.*,
+                u.name as owner_name,
+                u.username as owner_username
+            from learning_sessions ls
+            join users u on ls.owner_id = u.id
+            order by ls.created_at desc
+        `;
+
+        console.log("🔍 DEBUG: All sessions from DB:", allSessions.length);
+
+        // Apply filters in memory for now (not ideal but will work)
+        let filteredSessions = allSessions;
+
+        if (filters.subject) {
+            filteredSessions = filteredSessions.filter((s) =>
+                s.subject.toLowerCase().includes(filters.subject.toLowerCase())
+            );
+        }
+
+        if (filters.level) {
+            filteredSessions = filteredSessions.filter(
+                (s) => s.level === filters.level
+            );
+        }
+
+        if (filters.sessionType) {
+            filteredSessions = filteredSessions.filter(
+                (s) => s.session_type === filters.sessionType
+            );
+        }
+
+        if (filters.status) {
+            filteredSessions = filteredSessions.filter(
+                (s) => s.status === filters.status
+            );
+        }
+
+        if (filters.ownerId) {
+            filteredSessions = filteredSessions.filter(
+                (s) => s.owner_id === parseInt(filters.ownerId)
+            );
+        }
+
+        console.log("🔍 DEBUG: Filtered sessions:", filteredSessions.length);
+        return filteredSessions;
+    } catch (error) {
+        console.error("❌ Error in listLearningSessions:", error);
+        throw error;
     }
-
-    if (filters.level) {
-        whereConditions.push(`level = $${params.length + 1}`);
-        params.push(filters.level);
-    }
-
-    if (filters.sessionType) {
-        whereConditions.push(`session_type = $${params.length + 1}`);
-        params.push(filters.sessionType);
-    }
-
-    if (filters.status) {
-        whereConditions.push(`status = $${params.length + 1}`);
-        params.push(filters.status);
-    }
-
-    if (filters.ownerId) {
-        whereConditions.push(`owner_id = $${params.length + 1}`);
-        params.push(filters.ownerId);
-    }
-
-    const whereClause =
-        whereConditions.length > 0
-            ? `where ${whereConditions.join(" and ")}`
-            : "";
-
-    // Use template literal with dynamic where clause
-    const query = `
-        select 
-            ls.*,
-            u.name as owner_name,
-            u.username as owner_username
-        from learning_sessions ls
-        join users u on ls.owner_id = u.id
-        ${whereClause}
-        order by ls.created_at desc
-    `;
-
-    if (params.length === 0) {
-        return await sql.unsafe(query);
-    }
-
-    // For parameterized queries, we need to use unsafe with manual parameter binding
-    const sessions = await sql.unsafe(query, params);
-    return sessions;
 };
 
 const updateLearningSession = async (sessionId, ownerId, updates) => {
