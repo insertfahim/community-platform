@@ -57,10 +57,16 @@ const listIncidents = async (filters = {}) => {
                     reporter.name as reporter_name,
                     reporter.username as reporter_username,
                     resolver.name as resolved_by_name,
-                    resolver.username as resolved_by_username
+                    resolver.username as resolved_by_username,
+                    coalesce(update_counts.update_count, 0) as update_count
                 from incidents i
                 left join users reporter on i.reporter_id = reporter.id
                 left join users resolver on i.resolved_by = resolver.id
+                left join (
+                    select incident_id, count(*) as update_count
+                    from incident_updates
+                    group by incident_id
+                ) update_counts on i.id = update_counts.incident_id
                 order by
                     case when i.status = 'reported' then 1
                          when i.status = 'investigating' then 2
@@ -84,10 +90,16 @@ const listIncidents = async (filters = {}) => {
                 reporter.name as reporter_name,
                 reporter.username as reporter_username,
                 resolver.name as resolved_by_name,
-                resolver.username as resolved_by_username
+                resolver.username as resolved_by_username,
+                coalesce(update_counts.update_count, 0) as update_count
             from incidents i
             left join users reporter on i.reporter_id = reporter.id
             left join users resolver on i.resolved_by = resolver.id
+            left join (
+                select incident_id, count(*) as update_count
+                from incident_updates
+                group by incident_id
+            ) update_counts on i.id = update_counts.incident_id
             where ${whereConditions.join(" and ")}
             order by
                 case when i.status = 'reported' then 1
@@ -167,6 +179,31 @@ const getIncidentById = async (incidentId) => {
     return result[0] || null;
 };
 
+const getIncidentWithUpdates = async (incidentId) => {
+    const sql = getSql();
+
+    // Get incident details
+    const incident = await getIncidentById(incidentId);
+    if (!incident) return null;
+
+    // Get incident updates
+    const updates = await sql`
+        select 
+            iu.*,
+            u.name as reporter_name,
+            u.username as reporter_username
+        from incident_updates iu
+        left join users u on iu.reporter_id = u.id
+        where iu.incident_id = ${incidentId}
+        order by iu.created_at asc
+    `;
+
+    return {
+        ...incident,
+        updates: updates,
+    };
+};
+
 const getIncidentStats = async () => {
     const sql = getSql();
     const stats = await sql`
@@ -190,5 +227,6 @@ module.exports = {
     updateIncident,
     deleteIncident,
     getIncidentById,
+    getIncidentWithUpdates,
     getIncidentStats,
 };

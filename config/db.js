@@ -164,6 +164,30 @@ async function ensureSchema(sql) {
             updated_at timestamptz not null default now()
         );
     `;
+
+    // Incident updates
+    await sql`
+        create table if not exists incident_updates (
+            id bigserial primary key,
+            incident_id bigint not null references incidents(id) on delete cascade,
+            reporter_id bigint not null references users(id) on delete cascade,
+            update_text text not null,
+            status_change text check (status_change in ('reported','investigating','resolved','closed')),
+            created_at timestamptz not null default now(),
+            updated_at timestamptz not null default now()
+        );
+    `;
+
+    // Create indexes for incident_updates
+    await sql`
+        create index if not exists idx_incident_updates_incident_id on incident_updates(incident_id);
+    `;
+    await sql`
+        create index if not exists idx_incident_updates_reporter_id on incident_updates(reporter_id);
+    `;
+    await sql`
+        create index if not exists idx_incident_updates_created_at on incident_updates(created_at desc);
+    `;
 }
 
 async function connectToDatabase() {

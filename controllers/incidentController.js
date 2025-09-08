@@ -186,7 +186,14 @@ const getById = async (req, res) => {
             return res.status(400).json({ message: "Invalid incident ID" });
         }
 
-        const incident = await Incident.getIncidentById(incidentId);
+        const { includeUpdates } = req.query;
+
+        let incident;
+        if (includeUpdates === "true") {
+            incident = await Incident.getIncidentWithUpdates(incidentId);
+        } else {
+            incident = await Incident.getIncidentById(incidentId);
+        }
 
         if (!incident) {
             return res.status(404).json({ message: "Incident not found" });
